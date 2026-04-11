@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { Download, FileText, Star } from "lucide-react";
+import { exportToCSV, exportToPDF } from "../lib/export-utils";
 
 interface Field {
   key: string;
@@ -9,7 +11,7 @@ interface Field {
   defaultValue?: string;
 }
 
-interface Result {
+export interface Result {
   label: string;
   value: string | number;
   highlight?: boolean;
@@ -20,9 +22,10 @@ interface CalculatorFormProps {
   description: string;
   fields: Field[];
   onCalculate: (values: Record<string, string>) => Result[];
+  onSaveResult?: (inputs: Record<string, string>, results: Result[]) => void;
 }
 
-export const CalculatorForm: React.FC<CalculatorFormProps> = ({ title, description, fields, onCalculate }) => {
+export const CalculatorForm: React.FC<CalculatorFormProps> = ({ title, description, fields, onCalculate, onSaveResult }) => {
   const [values, setValues] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
     fields.forEach(f => { init[f.key] = f.defaultValue || ""; });
@@ -30,12 +33,22 @@ export const CalculatorForm: React.FC<CalculatorFormProps> = ({ title, descripti
   });
   const [results, setResults] = useState<Result[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  const fieldLabels = Object.fromEntries(fields.map(f => [f.key, f.label]));
 
   const handleCalculate = () => {
     try {
       setError(null);
+      setSaved(false);
       const res = onCalculate(values);
       setResults(res);
+      // Auto-save to history
+      if (onSaveResult) {
+        onSaveResult(values, res);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 1500);
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Calculation error");
       setResults(null);
@@ -85,7 +98,7 @@ export const CalculatorForm: React.FC<CalculatorFormProps> = ({ title, descripti
         ))}
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <button
           onClick={handleCalculate}
           className="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity"
@@ -98,6 +111,9 @@ export const CalculatorForm: React.FC<CalculatorFormProps> = ({ title, descripti
         >
           Clear
         </button>
+        {saved && (
+          <span className="text-xs text-primary self-center animate-in fade-in">✓ Saved to history</span>
+        )}
       </div>
 
       {error && (
@@ -116,6 +132,22 @@ export const CalculatorForm: React.FC<CalculatorFormProps> = ({ title, descripti
               </span>
             </div>
           ))}
+
+          {/* Export buttons */}
+          <div className="flex gap-2 pt-3 border-t border-border mt-3">
+            <button
+              onClick={() => exportToCSV(title, values, results, fieldLabels)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-secondary text-secondary-foreground text-xs font-medium hover:opacity-80 transition-opacity"
+            >
+              <Download size={13} /> CSV
+            </button>
+            <button
+              onClick={() => exportToPDF(title, values, results, fieldLabels)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-secondary text-secondary-foreground text-xs font-medium hover:opacity-80 transition-opacity"
+            >
+              <FileText size={13} /> PDF
+            </button>
+          </div>
         </div>
       )}
     </div>
