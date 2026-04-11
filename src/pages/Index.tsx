@@ -15,6 +15,7 @@ import * as yieldCurve from "../lib/calculators/yield-curve";
 import * as queuing from "../lib/calculators/queuing";
 import * as ops from "../lib/calculators/operations";
 import * as accounting from "../lib/calculators/accounting";
+import { getFormulaDoc } from "../lib/formula-docs";
 import {
   Calculator as CalcIcon, TrendingUp, BarChart3, PieChart, Landmark, Activity,
   ChevronRight, Menu, X, Warehouse, ShieldAlert, GitBranch,
