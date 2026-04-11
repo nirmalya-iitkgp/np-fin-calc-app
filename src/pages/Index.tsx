@@ -826,11 +826,15 @@ function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs:
   return <div className="text-muted-foreground text-sm">Select a calculator from the menu.</div>;
 }
 
+type SidebarView = "calculators" | "history" | "favorites";
+
 const Index = () => {
   const [activeModule, setActiveModule] = useState("tvm");
   const [activeSubCalc, setActiveSubCalc] = useState("fv");
   const [expandedModule, setExpandedModule] = useState("tvm");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarView, setSidebarView] = useState<SidebarView>("calculators");
+  const store = useCalculationStore();
 
   const handleModuleClick = (moduleId: string) => {
     if (expandedModule === moduleId) {
@@ -851,8 +855,27 @@ const Index = () => {
     setSidebarOpen(false);
   };
 
+  const handleLoadRecord = (record: CalculationRecord) => {
+    setActiveModule(record.moduleId);
+    setActiveSubCalc(record.subCalcId);
+    const mod = modules.find(m => m.id === record.moduleId);
+    if (mod) setExpandedModule(mod.id);
+    setSidebarOpen(false);
+  };
+
   const activeModuleData = modules.find(m => m.id === activeModule);
   const activeSubCalcData = activeModuleData?.subCalcs.find(s => s.id === activeSubCalc);
+
+  const onSaveResult = (inputs: Record<string, string>, results: Result[]) => {
+    store.addRecord({
+      moduleId: activeModule,
+      subCalcId: activeSubCalc,
+      moduleLabel: activeModuleData?.label || "",
+      subCalcLabel: activeSubCalcData?.label || "",
+      inputs,
+      results,
+    });
+  };
 
   return (
     <div className="flex h-screen overflow-hidden">
