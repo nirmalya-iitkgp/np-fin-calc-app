@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import { CalculatorForm } from "../components/CalculatorForm";
+import type { Result } from "../components/CalculatorForm";
+import { useCalculationStore, type CalculationRecord } from "../hooks/use-calculation-store";
+import { exportToCSV, exportToPDF } from "../lib/export-utils";
 import * as tvm from "../lib/calculators/tvm";
 import * as bonds from "../lib/calculators/bonds";
 import * as deriv from "../lib/calculators/derivatives";
@@ -13,9 +16,9 @@ import * as queuing from "../lib/calculators/queuing";
 import * as ops from "../lib/calculators/operations";
 import * as accounting from "../lib/calculators/accounting";
 import {
-  Calculator, TrendingUp, BarChart3, PieChart, Landmark, Activity,
+  Calculator as CalcIcon, TrendingUp, BarChart3, PieChart, Landmark, Activity,
   ChevronRight, Menu, X, Warehouse, ShieldAlert, GitBranch,
-  Users, Settings, FileSpreadsheet
+  Users, Settings, FileSpreadsheet, History, Star, Trash2, Download, FileText
 } from "lucide-react";
 
 const fmt = (v: number, decimals = 4) => Number(v.toFixed(decimals));
