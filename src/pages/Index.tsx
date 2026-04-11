@@ -826,7 +826,41 @@ function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs:
   return <div className="text-muted-foreground text-sm">Select a calculator from the menu.</div>;
 }
 
+const RecordCard: React.FC<{
+  record: CalculationRecord;
+  onLoad: (r: CalculationRecord) => void;
+  onToggleFav: (id: string) => void;
+  onDelete: (id: string) => void;
+}> = ({ record, onLoad, onToggleFav, onDelete }) => (
+  <div className="bg-sidebar-accent/30 rounded-lg p-2.5 group">
+    <div className="flex items-start justify-between gap-1">
+      <button onClick={() => onLoad(record)} className="text-left flex-1 min-w-0">
+        <p className="text-[12px] font-medium text-sidebar-accent-foreground truncate">{record.subCalcLabel}</p>
+        <p className="text-[10px] text-sidebar-foreground truncate">{record.moduleLabel}</p>
+      </button>
+      <div className="flex items-center gap-0.5 shrink-0">
+        <button onClick={() => onToggleFav(record.id)} className="p-1 rounded hover:bg-sidebar-accent">
+          <Star size={12} className={record.isFavorite ? "fill-primary text-primary" : "text-sidebar-foreground"} />
+        </button>
+        <button onClick={() => onDelete(record.id)} className="p-1 rounded hover:bg-sidebar-accent opacity-0 group-hover:opacity-100 transition-opacity">
+          <Trash2 size={12} className="text-sidebar-foreground" />
+        </button>
+      </div>
+    </div>
+    <div className="mt-1.5 space-y-0.5">
+      {record.results.slice(0, 2).map((r, i) => (
+        <div key={i} className="flex justify-between text-[10px]">
+          <span className="text-sidebar-foreground truncate">{r.label}</span>
+          <span className="text-primary font-medium ml-2 shrink-0">{r.value}</span>
+        </div>
+      ))}
+    </div>
+    <p className="text-[9px] text-sidebar-foreground/40 mt-1">{new Date(record.timestamp).toLocaleString()}</p>
+  </div>
+);
+
 type SidebarView = "calculators" | "history" | "favorites";
+
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState("tvm");
