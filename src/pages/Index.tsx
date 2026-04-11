@@ -143,6 +143,7 @@ function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs:
     if (isNaN(n)) throw new Error(`Invalid input: ${key}`);
     return n;
   };
+  const formulaDoc = getFormulaDoc(moduleId, subId);
 
   // ─── TVM ───
   if (moduleId === "tvm" && subId === "fv") return (
