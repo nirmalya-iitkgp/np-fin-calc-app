@@ -1023,7 +1023,7 @@ const Index = () => {
         {/* Calculator content */}
         <div className="max-w-2xl mx-auto px-6 lg:px-8 py-8">
           <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
-            {getCalcContent(activeModule, activeSubCalc)}
+            {getCalcContent(activeModule, activeSubCalc, onSaveResult)}
           </div>
         </div>
       </main>
