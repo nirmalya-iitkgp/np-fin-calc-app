@@ -907,38 +907,96 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
-          {modules.map(mod => (
-            <div key={mod.id}>
-              <button
-                onClick={() => handleModuleClick(mod.id)}
-                className={`sidebar-item w-full ${expandedModule === mod.id ? "sidebar-item-active" : ""}`}
-              >
-                <span className="shrink-0">{mod.icon}</span>
-                <span className="flex-1 text-left truncate">{mod.label}</span>
-                <ChevronRight size={14} className={`shrink-0 transition-transform duration-200 ${expandedModule === mod.id ? "rotate-90" : ""}`} />
-              </button>
-              {expandedModule === mod.id && (
-                <div className="ml-8 mt-1 mb-2 space-y-0.5">
-                  {mod.subCalcs.map(sub => (
-                    <button
-                      key={sub.id}
-                      onClick={() => handleSubCalcClick(mod.id, sub.id)}
-                      className={`w-full text-left text-[13px] px-3 py-1.5 rounded-md transition-colors duration-150
-                        ${activeModule === mod.id && activeSubCalc === sub.id
-                          ? "text-primary font-semibold bg-sidebar-accent"
-                          : "text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50"
-                        }`}
-                    >
-                      {sub.label}
-                    </button>
+        {/* View Tabs */}
+        <div className="flex border-b border-sidebar-border">
+          {([["calculators", CalcIcon, "Calcs"], ["history", History, "History"], ["favorites", Star, "Favorites"]] as const).map(([view, Icon, label]) => (
+            <button
+              key={view}
+              onClick={() => setSidebarView(view as SidebarView)}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-medium transition-colors
+                ${sidebarView === view ? "text-primary border-b-2 border-primary" : "text-sidebar-foreground hover:text-sidebar-accent-foreground"}`}
+            >
+              <Icon size={13} />
+              {label}
+              {view === "history" && store.history.length > 0 && (
+                <span className="bg-primary/20 text-primary text-[10px] px-1.5 rounded-full">{store.history.length}</span>
+              )}
+              {view === "favorites" && store.favorites.length > 0 && (
+                <span className="bg-primary/20 text-primary text-[10px] px-1.5 rounded-full">{store.favorites.length}</span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Navigation - Calculators */}
+        {sidebarView === "calculators" && (
+          <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
+            {modules.map(mod => (
+              <div key={mod.id}>
+                <button
+                  onClick={() => handleModuleClick(mod.id)}
+                  className={`sidebar-item w-full ${expandedModule === mod.id ? "sidebar-item-active" : ""}`}
+                >
+                  <span className="shrink-0">{mod.icon}</span>
+                  <span className="flex-1 text-left truncate">{mod.label}</span>
+                  <ChevronRight size={14} className={`shrink-0 transition-transform duration-200 ${expandedModule === mod.id ? "rotate-90" : ""}`} />
+                </button>
+                {expandedModule === mod.id && (
+                  <div className="ml-8 mt-1 mb-2 space-y-0.5">
+                    {mod.subCalcs.map(sub => (
+                      <button
+                        key={sub.id}
+                        onClick={() => handleSubCalcClick(mod.id, sub.id)}
+                        className={`w-full text-left text-[13px] px-3 py-1.5 rounded-md transition-colors duration-150
+                          ${activeModule === mod.id && activeSubCalc === sub.id
+                            ? "text-primary font-semibold bg-sidebar-accent"
+                            : "text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50"
+                          }`}
+                      >
+                        {sub.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </nav>
+        )}
+
+        {/* History View */}
+        {sidebarView === "history" && (
+          <div className="flex-1 overflow-y-auto py-3 px-3">
+            {store.history.length === 0 ? (
+              <p className="text-[12px] text-sidebar-foreground/60 text-center py-8">No calculations yet. Results are saved automatically.</p>
+            ) : (
+              <>
+                <button onClick={store.clearHistory} className="w-full text-[11px] text-destructive hover:text-destructive/80 text-center py-1 mb-2">
+                  Clear non-favorites
+                </button>
+                <div className="space-y-1">
+                  {store.history.map(rec => (
+                    <RecordCard key={rec.id} record={rec} onLoad={handleLoadRecord} onToggleFav={store.toggleFavorite} onDelete={store.deleteRecord} />
                   ))}
                 </div>
-              )}
-            </div>
-          ))}
-        </nav>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Favorites View */}
+        {sidebarView === "favorites" && (
+          <div className="flex-1 overflow-y-auto py-3 px-3">
+            {store.favorites.length === 0 ? (
+              <p className="text-[12px] text-sidebar-foreground/60 text-center py-8">Star a calculation to save it as a favorite.</p>
+            ) : (
+              <div className="space-y-1">
+                {store.favorites.map(rec => (
+                  <RecordCard key={rec.id} record={rec} onLoad={handleLoadRecord} onToggleFav={store.toggleFavorite} onDelete={store.deleteRecord} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Footer */}
         <div className="px-5 py-4 border-t border-sidebar-border">
