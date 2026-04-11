@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import { CalculatorForm } from "../components/CalculatorForm";
+import type { Result } from "../components/CalculatorForm";
+import { useCalculationStore, type CalculationRecord } from "../hooks/use-calculation-store";
+import { exportToCSV, exportToPDF } from "../lib/export-utils";
 import * as tvm from "../lib/calculators/tvm";
 import * as bonds from "../lib/calculators/bonds";
 import * as deriv from "../lib/calculators/derivatives";
@@ -13,9 +16,9 @@ import * as queuing from "../lib/calculators/queuing";
 import * as ops from "../lib/calculators/operations";
 import * as accounting from "../lib/calculators/accounting";
 import {
-  Calculator, TrendingUp, BarChart3, PieChart, Landmark, Activity,
+  Calculator as CalcIcon, TrendingUp, BarChart3, PieChart, Landmark, Activity,
   ChevronRight, Menu, X, Warehouse, ShieldAlert, GitBranch,
-  Users, Settings, FileSpreadsheet
+  Users, Settings, FileSpreadsheet, History, Star, Trash2, Download, FileText
 } from "lucide-react";
 
 const fmt = (v: number, decimals = 4) => Number(v.toFixed(decimals));
@@ -30,7 +33,7 @@ type Module = {
 
 const modules: Module[] = [
   {
-    id: "tvm", label: "Time Value of Money", icon: <Calculator size={18} />,
+    id: "tvm", label: "Time Value of Money", icon: <CalcIcon size={18} />,
     subCalcs: [
       { id: "fv", label: "Future Value" },
       { id: "pv", label: "Present Value" },
@@ -133,7 +136,7 @@ const modules: Module[] = [
   },
 ];
 
-function getCalcContent(moduleId: string, subId: string) {
+function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs: Record<string, string>, results: Result[]) => void) {
   const v = (vals: Record<string, string>, key: string) => {
     const n = parseFloat(vals[key]);
     if (isNaN(n)) throw new Error(`Invalid input: ${key}`);
@@ -142,7 +145,7 @@ function getCalcContent(moduleId: string, subId: string) {
 
   // ─── TVM ───
   if (moduleId === "tvm" && subId === "fv") return (
-    <CalculatorForm title="Future Value" description="Calculate the future value of a present sum."
+    <CalculatorForm onSaveResult={onSaveResult} title="Future Value" description="Calculate the future value of a present sum."
       fields={[
         { key: "pv", label: "Present Value ($)", placeholder: "1000" },
         { key: "rate", label: "Interest Rate (decimal)", placeholder: "0.05" },
@@ -152,7 +155,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "tvm" && subId === "pv") return (
-    <CalculatorForm title="Present Value" description="Calculate the present value of a future sum."
+    <CalculatorForm onSaveResult={onSaveResult} title="Present Value" description="Calculate the present value of a future sum."
       fields={[
         { key: "fv", label: "Future Value ($)", placeholder: "1500" },
         { key: "rate", label: "Discount Rate (decimal)", placeholder: "0.05" },
@@ -162,7 +165,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "tvm" && subId === "fv-annuity") return (
-    <CalculatorForm title="Future Value of Annuity" description="Calculate FV of a series of equal payments."
+    <CalculatorForm onSaveResult={onSaveResult} title="Future Value of Annuity" description="Calculate FV of a series of equal payments."
       fields={[
         { key: "pmt", label: "Payment ($)", placeholder: "200" },
         { key: "rate", label: "Interest Rate (decimal)", placeholder: "0.05" },
@@ -173,7 +176,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "tvm" && subId === "pv-annuity") return (
-    <CalculatorForm title="Present Value of Annuity" description="Calculate PV of a series of equal payments."
+    <CalculatorForm onSaveResult={onSaveResult} title="Present Value of Annuity" description="Calculate PV of a series of equal payments."
       fields={[
         { key: "pmt", label: "Payment ($)", placeholder: "200" },
         { key: "rate", label: "Discount Rate (decimal)", placeholder: "0.05" },
@@ -184,7 +187,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "tvm" && subId === "loan") return (
-    <CalculatorForm title="Loan Payment" description="Calculate periodic loan payment."
+    <CalculatorForm onSaveResult={onSaveResult} title="Loan Payment" description="Calculate periodic loan payment."
       fields={[
         { key: "principal", label: "Loan Principal ($)", placeholder: "100000" },
         { key: "rate", label: "Period Interest Rate (decimal)", placeholder: "0.004167" },
@@ -201,7 +204,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "tvm" && subId === "apr-ear") return (
-    <CalculatorForm title="APR ↔ EAR Conversion" description="Convert between APR and EAR."
+    <CalculatorForm onSaveResult={onSaveResult} title="APR ↔ EAR Conversion" description="Convert between APR and EAR."
       fields={[
         { key: "apr", label: "APR (decimal)", placeholder: "0.12" },
         { key: "m", label: "Compounding Periods / Year", placeholder: "12" },
@@ -218,7 +221,7 @@ function getCalcContent(moduleId: string, subId: string) {
 
   // ─── BONDS ───
   if (moduleId === "bonds" && subId === "bond-price") return (
-    <CalculatorForm title="Bond Price" description="Price a coupon-paying bond."
+    <CalculatorForm onSaveResult={onSaveResult} title="Bond Price" description="Price a coupon-paying bond."
       fields={[
         { key: "face", label: "Face Value ($)", placeholder: "1000" },
         { key: "coupon", label: "Coupon Rate (decimal)", placeholder: "0.06" },
@@ -230,7 +233,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "bonds" && subId === "zero-coupon") return (
-    <CalculatorForm title="Zero-Coupon Bond Price" description="Price a zero-coupon bond."
+    <CalculatorForm onSaveResult={onSaveResult} title="Zero-Coupon Bond Price" description="Price a zero-coupon bond."
       fields={[
         { key: "face", label: "Face Value ($)", placeholder: "1000" },
         { key: "ytm", label: "Yield to Maturity (decimal)", placeholder: "0.05" },
@@ -240,7 +243,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "bonds" && subId === "current-yield") return (
-    <CalculatorForm title="Current Yield" description="Calculate bond's current yield."
+    <CalculatorForm onSaveResult={onSaveResult} title="Current Yield" description="Calculate bond's current yield."
       fields={[
         { key: "coupon", label: "Coupon Rate (decimal)", placeholder: "0.06" },
         { key: "face", label: "Face Value ($)", placeholder: "1000" },
@@ -250,7 +253,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "bonds" && subId === "duration") return (
-    <CalculatorForm title="Duration & Convexity" description="Calculate Macaulay/Modified Duration and Convexity."
+    <CalculatorForm onSaveResult={onSaveResult} title="Duration & Convexity" description="Calculate Macaulay/Modified Duration and Convexity."
       fields={[
         { key: "face", label: "Face Value ($)", placeholder: "1000" },
         { key: "coupon", label: "Coupon Rate (decimal)", placeholder: "0.06" },
@@ -272,7 +275,7 @@ function getCalcContent(moduleId: string, subId: string) {
 
   // ─── DERIVATIVES ───
   if (moduleId === "derivatives" && subId === "bsm") return (
-    <CalculatorForm title="Black-Scholes-Merton" description="Price European call and put options."
+    <CalculatorForm onSaveResult={onSaveResult} title="Black-Scholes-Merton" description="Price European call and put options."
       fields={[
         { key: "S", label: "Spot Price ($)", placeholder: "100" },
         { key: "K", label: "Strike Price ($)", placeholder: "100" },
@@ -290,7 +293,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "derivatives" && subId === "greeks") return (
-    <CalculatorForm title="Option Greeks" description="Calculate Delta, Gamma, Vega, Theta, and Rho."
+    <CalculatorForm onSaveResult={onSaveResult} title="Option Greeks" description="Calculate Delta, Gamma, Vega, Theta, and Rho."
       fields={[
         { key: "S", label: "Spot Price ($)", placeholder: "100" },
         { key: "K", label: "Strike Price ($)", placeholder: "100" },
@@ -314,7 +317,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "derivatives" && subId === "futures") return (
-    <CalculatorForm title="Futures Price" description="Calculate theoretical futures price."
+    <CalculatorForm onSaveResult={onSaveResult} title="Futures Price" description="Calculate theoretical futures price."
       fields={[
         { key: "spot", label: "Spot Price ($)", placeholder: "50" },
         { key: "r", label: "Risk-Free Rate (decimal)", placeholder: "0.05" },
@@ -328,7 +331,7 @@ function getCalcContent(moduleId: string, subId: string) {
 
   // ─── CAPITAL BUDGETING ───
   if (moduleId === "capital" && subId === "npv") return (
-    <CalculatorForm title="Net Present Value (NPV)" description="Enter cash flows as comma-separated (first is initial investment, typically negative)."
+    <CalculatorForm onSaveResult={onSaveResult} title="Net Present Value (NPV)" description="Enter cash flows as comma-separated (first is initial investment, typically negative)."
       fields={[
         { key: "rate", label: "Discount Rate (decimal)", placeholder: "0.1" },
         { key: "cashflows", label: "Cash Flows (comma-separated)", placeholder: "-1000,300,400,500,600" },
@@ -341,7 +344,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "capital" && subId === "irr") return (
-    <CalculatorForm title="Internal Rate of Return (IRR)" description="Enter cash flows as comma-separated."
+    <CalculatorForm onSaveResult={onSaveResult} title="Internal Rate of Return (IRR)" description="Enter cash flows as comma-separated."
       fields={[{ key: "cashflows", label: "Cash Flows (comma-separated)", placeholder: "-1000,300,400,500,600" }]}
       onCalculate={vals => {
         const cfs = vals.cashflows.split(",").map(s => parseFloat(s.trim()));
@@ -353,7 +356,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "capital" && subId === "payback") return (
-    <CalculatorForm title="Payback Period" description="Calculate simple and discounted payback periods."
+    <CalculatorForm onSaveResult={onSaveResult} title="Payback Period" description="Calculate simple and discounted payback periods."
       fields={[
         { key: "investment", label: "Initial Investment ($)", placeholder: "1000" },
         { key: "cashflows", label: "Annual Cash Flows (comma-separated)", placeholder: "300,400,500,600" },
@@ -372,7 +375,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "capital" && subId === "pi") return (
-    <CalculatorForm title="Profitability Index" description="Ratio of PV of future cash flows to initial investment."
+    <CalculatorForm onSaveResult={onSaveResult} title="Profitability Index" description="Ratio of PV of future cash flows to initial investment."
       fields={[
         { key: "rate", label: "Discount Rate (decimal)", placeholder: "0.1" },
         { key: "investment", label: "Initial Investment ($)", placeholder: "1000" },
@@ -387,7 +390,7 @@ function getCalcContent(moduleId: string, subId: string) {
 
   // ─── EQUITY ───
   if (moduleId === "equity" && subId === "ggm") return (
-    <CalculatorForm title="Gordon Growth Model" description="Value a stock based on expected dividends growing at a constant rate."
+    <CalculatorForm onSaveResult={onSaveResult} title="Gordon Growth Model" description="Value a stock based on expected dividends growing at a constant rate."
       fields={[
         { key: "div", label: "Next Year's Dividend ($)", placeholder: "2" },
         { key: "g", label: "Growth Rate (decimal)", placeholder: "0.03" },
@@ -397,7 +400,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "equity" && subId === "capm") return (
-    <CalculatorForm title="CAPM" description="Calculate expected return using CAPM."
+    <CalculatorForm onSaveResult={onSaveResult} title="CAPM" description="Calculate expected return using CAPM."
       fields={[
         { key: "rf", label: "Risk-Free Rate (decimal)", placeholder: "0.03" },
         { key: "beta", label: "Beta", placeholder: "1.2" },
@@ -407,7 +410,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "equity" && subId === "sharpe") return (
-    <CalculatorForm title="Sharpe Ratio" description="Measure risk-adjusted return."
+    <CalculatorForm onSaveResult={onSaveResult} title="Sharpe Ratio" description="Measure risk-adjusted return."
       fields={[
         { key: "rp", label: "Portfolio Return (decimal)", placeholder: "0.12" },
         { key: "rf", label: "Risk-Free Rate (decimal)", placeholder: "0.03" },
@@ -417,7 +420,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "equity" && subId === "wacc") return (
-    <CalculatorForm title="WACC" description="Weighted Average Cost of Capital."
+    <CalculatorForm onSaveResult={onSaveResult} title="WACC" description="Weighted Average Cost of Capital."
       fields={[
         { key: "we", label: "Equity Weight (decimal)", placeholder: "0.6" },
         { key: "ke", label: "Cost of Equity (decimal)", placeholder: "0.1" },
@@ -431,7 +434,7 @@ function getCalcContent(moduleId: string, subId: string) {
 
   // ─── COMMODITY & REAL ESTATE ───
   if (moduleId === "commodity" && subId === "comm-futures") return (
-    <CalculatorForm title="Commodity Futures Price" description="Cost-of-carry model: F = S × exp((r + u − y) × T)"
+    <CalculatorForm onSaveResult={onSaveResult} title="Commodity Futures Price" description="Cost-of-carry model: F = S × exp((r + u − y) × T)"
       fields={[
         { key: "S", label: "Spot Price ($)", placeholder: "50" },
         { key: "T", label: "Time to Maturity (years)", placeholder: "0.5" },
@@ -443,7 +446,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "commodity" && subId === "schwartz-smith") return (
-    <CalculatorForm title="Schwartz-Smith Two-Factor Model" description="Two-factor commodity futures pricing with mean-reverting short-term factor."
+    <CalculatorForm onSaveResult={onSaveResult} title="Schwartz-Smith Two-Factor Model" description="Two-factor commodity futures pricing with mean-reverting short-term factor."
       fields={[
         { key: "S", label: "Spot Price ($)", placeholder: "50" },
         { key: "Z", label: "Long-term Factor Z (log units)", placeholder: "3.912" },
@@ -458,7 +461,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "commodity" && subId === "re-terminal") return (
-    <CalculatorForm title="Real Estate Terminal Value" description="Gordon Growth Model for real estate exit valuation."
+    <CalculatorForm onSaveResult={onSaveResult} title="Real Estate Terminal Value" description="Gordon Growth Model for real estate exit valuation."
       fields={[
         { key: "noi", label: "Next Period NOI ($)", placeholder: "500000" },
         { key: "capRate", label: "Exit Cap Rate (decimal)", placeholder: "0.07" },
@@ -470,7 +473,7 @@ function getCalcContent(moduleId: string, subId: string) {
 
   // ─── PRIVATE MARKETS & CREDIT RISK ───
   if (moduleId === "private" && subId === "illiquidity") return (
-    <CalculatorForm title="Illiquidity Discount (Option Model)" description="Put-option approach to valuing illiquidity cost."
+    <CalculatorForm onSaveResult={onSaveResult} title="Illiquidity Discount (Option Model)" description="Put-option approach to valuing illiquidity cost."
       fields={[
         { key: "value", label: "Asset Value ($)", placeholder: "1000000" },
         { key: "liqCost", label: "Liquidation Cost (%)", placeholder: "0.10" },
@@ -490,7 +493,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "private" && subId === "merton") return (
-    <CalculatorForm title="Merton Model (Credit Risk)" description="Structural credit risk model — equity as call option on firm assets."
+    <CalculatorForm onSaveResult={onSaveResult} title="Merton Model (Credit Risk)" description="Structural credit risk model — equity as call option on firm assets."
       fields={[
         { key: "E", label: "Equity Value ($)", placeholder: "500000" },
         { key: "sigmaE", label: "Equity Volatility (decimal)", placeholder: "0.4" },
@@ -510,7 +513,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "private" && subId === "mc-pe") return (
-    <CalculatorForm title="Monte Carlo PE Valuation" description="Simulate PE valuation with uncertain discount rates and exit multiples."
+    <CalculatorForm onSaveResult={onSaveResult} title="Monte Carlo PE Valuation" description="Simulate PE valuation with uncertain discount rates and exit multiples."
       fields={[
         { key: "fcfs", label: "Base FCFs (comma-separated)", placeholder: "100,120,140,160,180" },
         { key: "drMean", label: "Discount Rate Mean (decimal)", placeholder: "0.12" },
@@ -537,7 +540,7 @@ function getCalcContent(moduleId: string, subId: string) {
 
   // ─── YIELD CURVE ───
   if (moduleId === "yieldcurve" && subId === "nelson-siegel") return (
-    <CalculatorForm title="Nelson-Siegel Spot Yield" description="Calculate spot yield at a given maturity using NS parameters."
+    <CalculatorForm onSaveResult={onSaveResult} title="Nelson-Siegel Spot Yield" description="Calculate spot yield at a given maturity using NS parameters."
       fields={[
         { key: "m", label: "Maturity (years)", placeholder: "5" },
         { key: "beta0", label: "β₀ (long-term level)", placeholder: "0.06" },
@@ -549,7 +552,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "yieldcurve" && subId === "svensson") return (
-    <CalculatorForm title="Svensson Spot Yield" description="Extended Nelson-Siegel with second curvature term."
+    <CalculatorForm onSaveResult={onSaveResult} title="Svensson Spot Yield" description="Extended Nelson-Siegel with second curvature term."
       fields={[
         { key: "m", label: "Maturity (years)", placeholder: "5" },
         { key: "beta0", label: "β₀", placeholder: "0.06" },
@@ -563,7 +566,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "yieldcurve" && subId === "forward-rate") return (
-    <CalculatorForm title="Forward Rate" description="Calculate implied forward rate between two spot rates."
+    <CalculatorForm onSaveResult={onSaveResult} title="Forward Rate" description="Calculate implied forward rate between two spot rates."
       fields={[
         { key: "s1", label: "Spot Rate 1 (decimal)", placeholder: "0.04" },
         { key: "t1", label: "Maturity 1 (years)", placeholder: "2" },
@@ -574,7 +577,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "yieldcurve" && subId === "bootstrap") return (
-    <CalculatorForm title="Bootstrap Spot Rates" description="Derive spot rates from par yields. Enter comma-separated values."
+    <CalculatorForm onSaveResult={onSaveResult} title="Bootstrap Spot Rates" description="Derive spot rates from par yields. Enter comma-separated values."
       fields={[
         { key: "parYields", label: "Par Yields (comma-separated, decimal)", placeholder: "0.03,0.035,0.04,0.045,0.05" },
         { key: "maturities", label: "Maturities (comma-separated, years)", placeholder: "1,2,3,4,5" },
@@ -592,7 +595,7 @@ function getCalcContent(moduleId: string, subId: string) {
 
   // ─── QUEUING THEORY ───
   if (moduleId === "queuing" && subId === "mm1") return (
-    <CalculatorForm title="M/M/1 Queue" description="Single-server Markovian queue analysis."
+    <CalculatorForm onSaveResult={onSaveResult} title="M/M/1 Queue" description="Single-server Markovian queue analysis."
       fields={[
         { key: "lambda", label: "Arrival Rate (λ)", placeholder: "4" },
         { key: "mu", label: "Service Rate (μ)", placeholder: "5" },
@@ -611,7 +614,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "queuing" && subId === "mmc") return (
-    <CalculatorForm title="M/M/c Queue" description="Multi-server Markovian queue with Erlang-C."
+    <CalculatorForm onSaveResult={onSaveResult} title="M/M/c Queue" description="Multi-server Markovian queue with Erlang-C."
       fields={[
         { key: "lambda", label: "Arrival Rate (λ)", placeholder: "10" },
         { key: "mu", label: "Service Rate per Server (μ)", placeholder: "4" },
@@ -633,7 +636,7 @@ function getCalcContent(moduleId: string, subId: string) {
 
   // ─── OPERATIONS FINANCE ───
   if (moduleId === "operations" && subId === "eoq") return (
-    <CalculatorForm title="Economic Order Quantity (EOQ)" description="Optimal order quantity minimizing total inventory costs."
+    <CalculatorForm onSaveResult={onSaveResult} title="Economic Order Quantity (EOQ)" description="Optimal order quantity minimizing total inventory costs."
       fields={[
         { key: "D", label: "Annual Demand", placeholder: "10000" },
         { key: "S", label: "Ordering Cost per Order ($)", placeholder: "100" },
@@ -649,7 +652,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "operations" && subId === "rop") return (
-    <CalculatorForm title="Reorder Point" description="Calculate reorder point with safety stock."
+    <CalculatorForm onSaveResult={onSaveResult} title="Reorder Point" description="Calculate reorder point with safety stock."
       fields={[
         { key: "d", label: "Daily Demand", placeholder: "50" },
         { key: "lt", label: "Lead Time (days)", placeholder: "7" },
@@ -666,7 +669,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "operations" && subId === "newsvendor") return (
-    <CalculatorForm title="Newsvendor Model" description="Optimal stocking quantity under demand uncertainty."
+    <CalculatorForm onSaveResult={onSaveResult} title="Newsvendor Model" description="Optimal stocking quantity under demand uncertainty."
       fields={[
         { key: "cu", label: "Cost of Understock (Cu)", placeholder: "10" },
         { key: "co", label: "Cost of Overstock (Co)", placeholder: "3" },
@@ -690,7 +693,7 @@ function getCalcContent(moduleId: string, subId: string) {
 
   // ─── FINANCIAL ACCOUNTING ───
   if (moduleId === "accounting" && subId === "income-stmt") return (
-    <CalculatorForm title="Income Statement Generator" description="Generate a simplified income statement."
+    <CalculatorForm onSaveResult={onSaveResult} title="Income Statement Generator" description="Generate a simplified income statement."
       fields={[
         { key: "revenue", label: "Revenue ($)", placeholder: "1000000" },
         { key: "cogsPct", label: "COGS % of Revenue (decimal)", placeholder: "0.6" },
@@ -715,7 +718,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "accounting" && subId === "balance-sheet") return (
-    <CalculatorForm title="Balance Sheet Generator" description="Generate a simplified balance sheet."
+    <CalculatorForm onSaveResult={onSaveResult} title="Balance Sheet Generator" description="Generate a simplified balance sheet."
       fields={[
         { key: "cash", label: "Cash ($)", placeholder: "100000" },
         { key: "receivables", label: "Receivables ($)", placeholder: "150000" },
@@ -739,7 +742,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "accounting" && subId === "ratios") return (
-    <CalculatorForm title="Financial Ratios" description="Calculate key financial ratios from income and balance sheet data."
+    <CalculatorForm onSaveResult={onSaveResult} title="Financial Ratios" description="Calculate key financial ratios from income and balance sheet data."
       fields={[
         { key: "revenue", label: "Revenue ($)", placeholder: "1000000" },
         { key: "grossProfit", label: "Gross Profit ($)", placeholder: "400000" },
@@ -767,7 +770,7 @@ function getCalcContent(moduleId: string, subId: string) {
 
   // ─── GENERAL TOOLS ───
   if (moduleId === "general" && subId === "stats") return (
-    <CalculatorForm title="Descriptive Statistics" description="Enter comma-separated numbers."
+    <CalculatorForm onSaveResult={onSaveResult} title="Descriptive Statistics" description="Enter comma-separated numbers."
       fields={[{ key: "data", label: "Data (comma-separated)", placeholder: "10,20,30,40,50" }]}
       onCalculate={vals => {
         const data = vals.data.split(",").map(s => parseFloat(s.trim()));
@@ -789,7 +792,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "general" && subId === "perpetuity") return (
-    <CalculatorForm title="Perpetuity Valuation" description="Value a perpetuity (simple or growing)."
+    <CalculatorForm onSaveResult={onSaveResult} title="Perpetuity Valuation" description="Value a perpetuity (simple or growing)."
       fields={[
         { key: "cf", label: "Cash Flow ($)", placeholder: "100" },
         { key: "r", label: "Discount Rate (decimal)", placeholder: "0.05" },
@@ -803,7 +806,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "general" && subId === "depreciation") return (
-    <CalculatorForm title="Depreciation" description="Calculate depreciation schedule."
+    <CalculatorForm onSaveResult={onSaveResult} title="Depreciation" description="Calculate depreciation schedule."
       fields={[
         { key: "cost", label: "Asset Cost ($)", placeholder: "10000" },
         { key: "salvage", label: "Salvage Value ($)", placeholder: "1000" },
@@ -823,11 +826,49 @@ function getCalcContent(moduleId: string, subId: string) {
   return <div className="text-muted-foreground text-sm">Select a calculator from the menu.</div>;
 }
 
+const RecordCard: React.FC<{
+  record: CalculationRecord;
+  onLoad: (r: CalculationRecord) => void;
+  onToggleFav: (id: string) => void;
+  onDelete: (id: string) => void;
+}> = ({ record, onLoad, onToggleFav, onDelete }) => (
+  <div className="bg-sidebar-accent/30 rounded-lg p-2.5 group">
+    <div className="flex items-start justify-between gap-1">
+      <button onClick={() => onLoad(record)} className="text-left flex-1 min-w-0">
+        <p className="text-[12px] font-medium text-sidebar-accent-foreground truncate">{record.subCalcLabel}</p>
+        <p className="text-[10px] text-sidebar-foreground truncate">{record.moduleLabel}</p>
+      </button>
+      <div className="flex items-center gap-0.5 shrink-0">
+        <button onClick={() => onToggleFav(record.id)} className="p-1 rounded hover:bg-sidebar-accent">
+          <Star size={12} className={record.isFavorite ? "fill-primary text-primary" : "text-sidebar-foreground"} />
+        </button>
+        <button onClick={() => onDelete(record.id)} className="p-1 rounded hover:bg-sidebar-accent opacity-0 group-hover:opacity-100 transition-opacity">
+          <Trash2 size={12} className="text-sidebar-foreground" />
+        </button>
+      </div>
+    </div>
+    <div className="mt-1.5 space-y-0.5">
+      {record.results.slice(0, 2).map((r, i) => (
+        <div key={i} className="flex justify-between text-[10px]">
+          <span className="text-sidebar-foreground truncate">{r.label}</span>
+          <span className="text-primary font-medium ml-2 shrink-0">{r.value}</span>
+        </div>
+      ))}
+    </div>
+    <p className="text-[9px] text-sidebar-foreground/40 mt-1">{new Date(record.timestamp).toLocaleString()}</p>
+  </div>
+);
+
+type SidebarView = "calculators" | "history" | "favorites";
+
+
 const Index = () => {
   const [activeModule, setActiveModule] = useState("tvm");
   const [activeSubCalc, setActiveSubCalc] = useState("fv");
   const [expandedModule, setExpandedModule] = useState("tvm");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarView, setSidebarView] = useState<SidebarView>("calculators");
+  const store = useCalculationStore();
 
   const handleModuleClick = (moduleId: string) => {
     if (expandedModule === moduleId) {
@@ -848,8 +889,27 @@ const Index = () => {
     setSidebarOpen(false);
   };
 
+  const handleLoadRecord = (record: CalculationRecord) => {
+    setActiveModule(record.moduleId);
+    setActiveSubCalc(record.subCalcId);
+    const mod = modules.find(m => m.id === record.moduleId);
+    if (mod) setExpandedModule(mod.id);
+    setSidebarOpen(false);
+  };
+
   const activeModuleData = modules.find(m => m.id === activeModule);
   const activeSubCalcData = activeModuleData?.subCalcs.find(s => s.id === activeSubCalc);
+
+  const onSaveResult = (inputs: Record<string, string>, results: Result[]) => {
+    store.addRecord({
+      moduleId: activeModule,
+      subCalcId: activeSubCalc,
+      moduleLabel: activeModuleData?.label || "",
+      subCalcLabel: activeSubCalcData?.label || "",
+      inputs,
+      results,
+    });
+  };
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -872,7 +932,7 @@ const Index = () => {
         <div className="px-5 py-5 border-b border-sidebar-border">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Calculator size={16} className="text-primary-foreground" />
+              <CalcIcon size={16} className="text-primary-foreground" />
             </div>
             <div>
               <h1 className="text-sm font-bold text-sidebar-accent-foreground tracking-tight">Financial Calculator</h1>
@@ -881,38 +941,96 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
-          {modules.map(mod => (
-            <div key={mod.id}>
-              <button
-                onClick={() => handleModuleClick(mod.id)}
-                className={`sidebar-item w-full ${expandedModule === mod.id ? "sidebar-item-active" : ""}`}
-              >
-                <span className="shrink-0">{mod.icon}</span>
-                <span className="flex-1 text-left truncate">{mod.label}</span>
-                <ChevronRight size={14} className={`shrink-0 transition-transform duration-200 ${expandedModule === mod.id ? "rotate-90" : ""}`} />
-              </button>
-              {expandedModule === mod.id && (
-                <div className="ml-8 mt-1 mb-2 space-y-0.5">
-                  {mod.subCalcs.map(sub => (
-                    <button
-                      key={sub.id}
-                      onClick={() => handleSubCalcClick(mod.id, sub.id)}
-                      className={`w-full text-left text-[13px] px-3 py-1.5 rounded-md transition-colors duration-150
-                        ${activeModule === mod.id && activeSubCalc === sub.id
-                          ? "text-primary font-semibold bg-sidebar-accent"
-                          : "text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50"
-                        }`}
-                    >
-                      {sub.label}
-                    </button>
+        {/* View Tabs */}
+        <div className="flex border-b border-sidebar-border">
+          {([["calculators", CalcIcon, "Calcs"], ["history", History, "History"], ["favorites", Star, "Favorites"]] as const).map(([view, Icon, label]) => (
+            <button
+              key={view}
+              onClick={() => setSidebarView(view as SidebarView)}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-medium transition-colors
+                ${sidebarView === view ? "text-primary border-b-2 border-primary" : "text-sidebar-foreground hover:text-sidebar-accent-foreground"}`}
+            >
+              <Icon size={13} />
+              {label}
+              {view === "history" && store.history.length > 0 && (
+                <span className="bg-primary/20 text-primary text-[10px] px-1.5 rounded-full">{store.history.length}</span>
+              )}
+              {view === "favorites" && store.favorites.length > 0 && (
+                <span className="bg-primary/20 text-primary text-[10px] px-1.5 rounded-full">{store.favorites.length}</span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Navigation - Calculators */}
+        {sidebarView === "calculators" && (
+          <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
+            {modules.map(mod => (
+              <div key={mod.id}>
+                <button
+                  onClick={() => handleModuleClick(mod.id)}
+                  className={`sidebar-item w-full ${expandedModule === mod.id ? "sidebar-item-active" : ""}`}
+                >
+                  <span className="shrink-0">{mod.icon}</span>
+                  <span className="flex-1 text-left truncate">{mod.label}</span>
+                  <ChevronRight size={14} className={`shrink-0 transition-transform duration-200 ${expandedModule === mod.id ? "rotate-90" : ""}`} />
+                </button>
+                {expandedModule === mod.id && (
+                  <div className="ml-8 mt-1 mb-2 space-y-0.5">
+                    {mod.subCalcs.map(sub => (
+                      <button
+                        key={sub.id}
+                        onClick={() => handleSubCalcClick(mod.id, sub.id)}
+                        className={`w-full text-left text-[13px] px-3 py-1.5 rounded-md transition-colors duration-150
+                          ${activeModule === mod.id && activeSubCalc === sub.id
+                            ? "text-primary font-semibold bg-sidebar-accent"
+                            : "text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50"
+                          }`}
+                      >
+                        {sub.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </nav>
+        )}
+
+        {/* History View */}
+        {sidebarView === "history" && (
+          <div className="flex-1 overflow-y-auto py-3 px-3">
+            {store.history.length === 0 ? (
+              <p className="text-[12px] text-sidebar-foreground/60 text-center py-8">No calculations yet. Results are saved automatically.</p>
+            ) : (
+              <>
+                <button onClick={store.clearHistory} className="w-full text-[11px] text-destructive hover:text-destructive/80 text-center py-1 mb-2">
+                  Clear non-favorites
+                </button>
+                <div className="space-y-1">
+                  {store.history.map(rec => (
+                    <RecordCard key={rec.id} record={rec} onLoad={handleLoadRecord} onToggleFav={store.toggleFavorite} onDelete={store.deleteRecord} />
                   ))}
                 </div>
-              )}
-            </div>
-          ))}
-        </nav>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Favorites View */}
+        {sidebarView === "favorites" && (
+          <div className="flex-1 overflow-y-auto py-3 px-3">
+            {store.favorites.length === 0 ? (
+              <p className="text-[12px] text-sidebar-foreground/60 text-center py-8">Star a calculation to save it as a favorite.</p>
+            ) : (
+              <div className="space-y-1">
+                {store.favorites.map(rec => (
+                  <RecordCard key={rec.id} record={rec} onLoad={handleLoadRecord} onToggleFav={store.toggleFavorite} onDelete={store.deleteRecord} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Footer */}
         <div className="px-5 py-4 border-t border-sidebar-border">
@@ -939,7 +1057,7 @@ const Index = () => {
         {/* Calculator content */}
         <div className="max-w-2xl mx-auto px-6 lg:px-8 py-8">
           <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
-            {getCalcContent(activeModule, activeSubCalc)}
+            {getCalcContent(activeModule, activeSubCalc, onSaveResult)}
           </div>
         </div>
       </main>
