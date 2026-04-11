@@ -875,7 +875,7 @@ const Index = () => {
         <div className="px-5 py-5 border-b border-sidebar-border">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              {<CalcIcon size={16} className="text-primary-foreground" />
+              <CalcIcon size={16} className="text-primary-foreground" />
             </div>
             <div>
               <h1 className="text-sm font-bold text-sidebar-accent-foreground tracking-tight">Financial Calculator</h1>
