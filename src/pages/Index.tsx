@@ -6,9 +6,16 @@ import * as deriv from "../lib/calculators/derivatives";
 import * as capBudget from "../lib/calculators/capital-budgeting";
 import * as equity from "../lib/calculators/equity";
 import * as general from "../lib/calculators/general";
+import * as commRE from "../lib/calculators/commodity-realestate";
+import * as privCredit from "../lib/calculators/private-credit";
+import * as yieldCurve from "../lib/calculators/yield-curve";
+import * as queuing from "../lib/calculators/queuing";
+import * as ops from "../lib/calculators/operations";
+import * as accounting from "../lib/calculators/accounting";
 import {
   Calculator, TrendingUp, BarChart3, PieChart, Landmark, Activity,
-  ChevronRight, Menu, X
+  ChevronRight, Menu, X, Warehouse, ShieldAlert, GitBranch,
+  Users, Settings, FileSpreadsheet
 } from "lucide-react";
 
 const fmt = (v: number, decimals = 4) => Number(v.toFixed(decimals));
@@ -69,6 +76,54 @@ const modules: Module[] = [
     ],
   },
   {
+    id: "commodity", label: "Commodity & Real Estate", icon: <Warehouse size={18} />,
+    subCalcs: [
+      { id: "comm-futures", label: "Commodity Futures" },
+      { id: "schwartz-smith", label: "Schwartz-Smith Model" },
+      { id: "re-terminal", label: "RE Terminal Value" },
+    ],
+  },
+  {
+    id: "private", label: "Private Mkts & Credit", icon: <ShieldAlert size={18} />,
+    subCalcs: [
+      { id: "illiquidity", label: "Illiquidity Discount" },
+      { id: "merton", label: "Merton Credit Risk" },
+      { id: "mc-pe", label: "Monte Carlo PE" },
+    ],
+  },
+  {
+    id: "yieldcurve", label: "Yield Curve Models", icon: <GitBranch size={18} />,
+    subCalcs: [
+      { id: "nelson-siegel", label: "Nelson-Siegel" },
+      { id: "svensson", label: "Svensson" },
+      { id: "forward-rate", label: "Forward Rate" },
+      { id: "bootstrap", label: "Bootstrap Spot Rates" },
+    ],
+  },
+  {
+    id: "queuing", label: "Queuing Theory", icon: <Users size={18} />,
+    subCalcs: [
+      { id: "mm1", label: "M/M/1 Queue" },
+      { id: "mmc", label: "M/M/c Queue" },
+    ],
+  },
+  {
+    id: "operations", label: "Operations Finance", icon: <Settings size={18} />,
+    subCalcs: [
+      { id: "eoq", label: "EOQ" },
+      { id: "rop", label: "Reorder Point" },
+      { id: "newsvendor", label: "Newsvendor Model" },
+    ],
+  },
+  {
+    id: "accounting", label: "Financial Accounting", icon: <FileSpreadsheet size={18} />,
+    subCalcs: [
+      { id: "income-stmt", label: "Income Statement" },
+      { id: "balance-sheet", label: "Balance Sheet" },
+      { id: "ratios", label: "Financial Ratios" },
+    ],
+  },
+  {
     id: "general", label: "General Tools", icon: <PieChart size={18} />,
     subCalcs: [
       { id: "stats", label: "Descriptive Statistics" },
@@ -85,7 +140,7 @@ function getCalcContent(moduleId: string, subId: string) {
     return n;
   };
 
-  // TVM
+  // ─── TVM ───
   if (moduleId === "tvm" && subId === "fv") return (
     <CalculatorForm title="Future Value" description="Calculate the future value of a present sum."
       fields={[
@@ -161,7 +216,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
 
-  // Bonds
+  // ─── BONDS ───
   if (moduleId === "bonds" && subId === "bond-price") return (
     <CalculatorForm title="Bond Price" description="Price a coupon-paying bond."
       fields={[
@@ -215,7 +270,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
 
-  // Derivatives
+  // ─── DERIVATIVES ───
   if (moduleId === "derivatives" && subId === "bsm") return (
     <CalculatorForm title="Black-Scholes-Merton" description="Price European call and put options."
       fields={[
@@ -271,9 +326,9 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
 
-  // Capital Budgeting
+  // ─── CAPITAL BUDGETING ───
   if (moduleId === "capital" && subId === "npv") return (
-    <CalculatorForm title="Net Present Value (NPV)" description="Enter cash flows as comma-separated values (first is initial investment, typically negative)."
+    <CalculatorForm title="Net Present Value (NPV)" description="Enter cash flows as comma-separated (first is initial investment, typically negative)."
       fields={[
         { key: "rate", label: "Discount Rate (decimal)", placeholder: "0.1" },
         { key: "cashflows", label: "Cash Flows (comma-separated)", placeholder: "-1000,300,400,500,600" },
@@ -286,10 +341,8 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "capital" && subId === "irr") return (
-    <CalculatorForm title="Internal Rate of Return (IRR)" description="Enter cash flows as comma-separated values."
-      fields={[
-        { key: "cashflows", label: "Cash Flows (comma-separated)", placeholder: "-1000,300,400,500,600" },
-      ]}
+    <CalculatorForm title="Internal Rate of Return (IRR)" description="Enter cash flows as comma-separated."
+      fields={[{ key: "cashflows", label: "Cash Flows (comma-separated)", placeholder: "-1000,300,400,500,600" }]}
       onCalculate={vals => {
         const cfs = vals.cashflows.split(",").map(s => parseFloat(s.trim()));
         if (cfs.some(isNaN)) throw new Error("Invalid cash flows");
@@ -319,7 +372,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "capital" && subId === "pi") return (
-    <CalculatorForm title="Profitability Index" description="Calculate the ratio of PV of future cash flows to initial investment."
+    <CalculatorForm title="Profitability Index" description="Ratio of PV of future cash flows to initial investment."
       fields={[
         { key: "rate", label: "Discount Rate (decimal)", placeholder: "0.1" },
         { key: "investment", label: "Initial Investment ($)", placeholder: "1000" },
@@ -332,7 +385,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
 
-  // Equity
+  // ─── EQUITY ───
   if (moduleId === "equity" && subId === "ggm") return (
     <CalculatorForm title="Gordon Growth Model" description="Value a stock based on expected dividends growing at a constant rate."
       fields={[
@@ -344,7 +397,7 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
   if (moduleId === "equity" && subId === "capm") return (
-    <CalculatorForm title="CAPM" description="Calculate expected return using the Capital Asset Pricing Model."
+    <CalculatorForm title="CAPM" description="Calculate expected return using CAPM."
       fields={[
         { key: "rf", label: "Risk-Free Rate (decimal)", placeholder: "0.03" },
         { key: "beta", label: "Beta", placeholder: "1.2" },
@@ -376,12 +429,346 @@ function getCalcContent(moduleId: string, subId: string) {
     />
   );
 
-  // General Tools
+  // ─── COMMODITY & REAL ESTATE ───
+  if (moduleId === "commodity" && subId === "comm-futures") return (
+    <CalculatorForm title="Commodity Futures Price" description="Cost-of-carry model: F = S × exp((r + u − y) × T)"
+      fields={[
+        { key: "S", label: "Spot Price ($)", placeholder: "50" },
+        { key: "T", label: "Time to Maturity (years)", placeholder: "0.5" },
+        { key: "r", label: "Risk-Free Rate (decimal)", placeholder: "0.05" },
+        { key: "u", label: "Storage Cost Rate (decimal)", placeholder: "0.02" },
+        { key: "y", label: "Convenience Yield (decimal)", placeholder: "0.01" },
+      ]}
+      onCalculate={vals => [{ label: "Futures Price", value: fmt(commRE.commodityFuturesPrice(v(vals,"S"), v(vals,"T"), v(vals,"r"), v(vals,"u"), v(vals,"y")), 4), highlight: true }]}
+    />
+  );
+  if (moduleId === "commodity" && subId === "schwartz-smith") return (
+    <CalculatorForm title="Schwartz-Smith Two-Factor Model" description="Two-factor commodity futures pricing with mean-reverting short-term factor."
+      fields={[
+        { key: "S", label: "Spot Price ($)", placeholder: "50" },
+        { key: "Z", label: "Long-term Factor Z (log units)", placeholder: "3.912" },
+        { key: "T", label: "Time to Maturity (years)", placeholder: "1" },
+        { key: "r", label: "Risk-Free Rate (decimal)", placeholder: "0.05" },
+        { key: "kappa", label: "Mean Reversion Speed (κ)", placeholder: "1.5" },
+        { key: "sigmaX", label: "Short-term Vol (σ_X)", placeholder: "0.3" },
+        { key: "sigmaZ", label: "Long-term Vol (σ_ζ)", placeholder: "0.1" },
+        { key: "rho", label: "Correlation (ρ)", placeholder: "0.5" },
+      ]}
+      onCalculate={vals => [{ label: "Futures Price", value: fmt(commRE.schwartzSmithFuturesPrice(v(vals,"S"), v(vals,"Z"), v(vals,"T"), v(vals,"r"), v(vals,"kappa"), v(vals,"sigmaX"), v(vals,"sigmaZ"), v(vals,"rho")), 4), highlight: true }]}
+    />
+  );
+  if (moduleId === "commodity" && subId === "re-terminal") return (
+    <CalculatorForm title="Real Estate Terminal Value" description="Gordon Growth Model for real estate exit valuation."
+      fields={[
+        { key: "noi", label: "Next Period NOI ($)", placeholder: "500000" },
+        { key: "capRate", label: "Exit Cap Rate (decimal)", placeholder: "0.07" },
+        { key: "growth", label: "Long-term Growth Rate (decimal)", placeholder: "0.02" },
+      ]}
+      onCalculate={vals => [{ label: "Terminal Value", value: fmt(commRE.realEstateTerminalValue(v(vals,"noi"), v(vals,"capRate"), v(vals,"growth")), 2), highlight: true }]}
+    />
+  );
+
+  // ─── PRIVATE MARKETS & CREDIT RISK ───
+  if (moduleId === "private" && subId === "illiquidity") return (
+    <CalculatorForm title="Illiquidity Discount (Option Model)" description="Put-option approach to valuing illiquidity cost."
+      fields={[
+        { key: "value", label: "Asset Value ($)", placeholder: "1000000" },
+        { key: "liqCost", label: "Liquidation Cost (%)", placeholder: "0.10" },
+        { key: "holdPeriod", label: "Holding Period (years)", placeholder: "3" },
+        { key: "vol", label: "Volatility (decimal)", placeholder: "0.25" },
+        { key: "rf", label: "Risk-Free Rate (decimal)", placeholder: "0.04" },
+        { key: "gSpread", label: "G-Spread (decimal)", placeholder: "0.02" },
+      ]}
+      onCalculate={vals => {
+        const res = privCredit.illiquidityDiscount(v(vals,"value"), v(vals,"liqCost"), v(vals,"holdPeriod"), v(vals,"vol"), v(vals,"rf"), v(vals,"gSpread"));
+        return [
+          { label: "Discount Value", value: fmt(res.discountValue, 2), highlight: true },
+          { label: "Discount %", value: pct(res.discountPct) },
+          { label: "Adjusted Asset Value", value: fmt(res.adjustedValue, 2) },
+        ];
+      }}
+    />
+  );
+  if (moduleId === "private" && subId === "merton") return (
+    <CalculatorForm title="Merton Model (Credit Risk)" description="Structural credit risk model — equity as call option on firm assets."
+      fields={[
+        { key: "E", label: "Equity Value ($)", placeholder: "500000" },
+        { key: "sigmaE", label: "Equity Volatility (decimal)", placeholder: "0.4" },
+        { key: "D", label: "Face Value of Debt ($)", placeholder: "800000" },
+        { key: "T", label: "Time to Debt Maturity (years)", placeholder: "5" },
+        { key: "r", label: "Risk-Free Rate (decimal)", placeholder: "0.05" },
+      ]}
+      onCalculate={vals => {
+        const res = privCredit.mertonCreditRisk(v(vals,"E"), v(vals,"sigmaE"), v(vals,"D"), v(vals,"T"), v(vals,"r"));
+        return [
+          { label: "Implied Asset Value", value: fmt(res.impliedAssetValue, 2), highlight: true },
+          { label: "Implied Asset Vol", value: pct(res.impliedAssetVolatility) },
+          { label: "Distance to Default", value: fmt(res.distanceToDefault, 4) },
+          { label: "Probability of Default", value: pct(res.probabilityOfDefault) },
+        ];
+      }}
+    />
+  );
+  if (moduleId === "private" && subId === "mc-pe") return (
+    <CalculatorForm title="Monte Carlo PE Valuation" description="Simulate PE valuation with uncertain discount rates and exit multiples."
+      fields={[
+        { key: "fcfs", label: "Base FCFs (comma-separated)", placeholder: "100,120,140,160,180" },
+        { key: "drMean", label: "Discount Rate Mean (decimal)", placeholder: "0.12" },
+        { key: "drStd", label: "Discount Rate Std Dev", placeholder: "0.02" },
+        { key: "emMean", label: "Exit Multiple Mean", placeholder: "8" },
+        { key: "emStd", label: "Exit Multiple Std Dev", placeholder: "1.5" },
+        { key: "sims", label: "Number of Simulations", placeholder: "10000" },
+      ]}
+      onCalculate={vals => {
+        const fcfs = vals.fcfs.split(",").map(s => parseFloat(s.trim()));
+        if (fcfs.some(isNaN)) throw new Error("Invalid FCFs");
+        const res = privCredit.monteCarloPEValuation(fcfs, v(vals,"drMean"), v(vals,"drStd"), v(vals,"emMean"), v(vals,"emStd"), Math.round(v(vals,"sims")));
+        return [
+          { label: "Mean Valuation", value: fmt(res.mean, 2), highlight: true },
+          { label: "Median Valuation", value: fmt(res.median, 2) },
+          { label: "5th Percentile", value: fmt(res.p5, 2) },
+          { label: "25th Percentile", value: fmt(res.p25, 2) },
+          { label: "75th Percentile", value: fmt(res.p75, 2) },
+          { label: "95th Percentile", value: fmt(res.p95, 2) },
+        ];
+      }}
+    />
+  );
+
+  // ─── YIELD CURVE ───
+  if (moduleId === "yieldcurve" && subId === "nelson-siegel") return (
+    <CalculatorForm title="Nelson-Siegel Spot Yield" description="Calculate spot yield at a given maturity using NS parameters."
+      fields={[
+        { key: "m", label: "Maturity (years)", placeholder: "5" },
+        { key: "beta0", label: "β₀ (long-term level)", placeholder: "0.06" },
+        { key: "beta1", label: "β₁ (slope)", placeholder: "-0.02" },
+        { key: "beta2", label: "β₂ (curvature)", placeholder: "0.01" },
+        { key: "tau", label: "τ (decay)", placeholder: "1.5" },
+      ]}
+      onCalculate={vals => [{ label: "Spot Yield", value: pct(yieldCurve.nelsonSiegelYield(v(vals,"m"), v(vals,"beta0"), v(vals,"beta1"), v(vals,"beta2"), v(vals,"tau"))), highlight: true }]}
+    />
+  );
+  if (moduleId === "yieldcurve" && subId === "svensson") return (
+    <CalculatorForm title="Svensson Spot Yield" description="Extended Nelson-Siegel with second curvature term."
+      fields={[
+        { key: "m", label: "Maturity (years)", placeholder: "5" },
+        { key: "beta0", label: "β₀", placeholder: "0.06" },
+        { key: "beta1", label: "β₁", placeholder: "-0.02" },
+        { key: "beta2", label: "β₂", placeholder: "0.01" },
+        { key: "beta3", label: "β₃", placeholder: "0.005" },
+        { key: "tau1", label: "τ₁", placeholder: "1.5" },
+        { key: "tau2", label: "τ₂", placeholder: "5" },
+      ]}
+      onCalculate={vals => [{ label: "Spot Yield", value: pct(yieldCurve.svenssonYield(v(vals,"m"), v(vals,"beta0"), v(vals,"beta1"), v(vals,"beta2"), v(vals,"beta3"), v(vals,"tau1"), v(vals,"tau2"))), highlight: true }]}
+    />
+  );
+  if (moduleId === "yieldcurve" && subId === "forward-rate") return (
+    <CalculatorForm title="Forward Rate" description="Calculate implied forward rate between two spot rates."
+      fields={[
+        { key: "s1", label: "Spot Rate 1 (decimal)", placeholder: "0.04" },
+        { key: "t1", label: "Maturity 1 (years)", placeholder: "2" },
+        { key: "s2", label: "Spot Rate 2 (decimal)", placeholder: "0.05" },
+        { key: "t2", label: "Maturity 2 (years)", placeholder: "5" },
+      ]}
+      onCalculate={vals => [{ label: "Forward Rate", value: pct(yieldCurve.forwardRate(v(vals,"s1"), v(vals,"t1"), v(vals,"s2"), v(vals,"t2"))), highlight: true }]}
+    />
+  );
+  if (moduleId === "yieldcurve" && subId === "bootstrap") return (
+    <CalculatorForm title="Bootstrap Spot Rates" description="Derive spot rates from par yields. Enter comma-separated values."
+      fields={[
+        { key: "parYields", label: "Par Yields (comma-separated, decimal)", placeholder: "0.03,0.035,0.04,0.045,0.05" },
+        { key: "maturities", label: "Maturities (comma-separated, years)", placeholder: "1,2,3,4,5" },
+      ]}
+      onCalculate={vals => {
+        const py = vals.parYields.split(",").map(s => parseFloat(s.trim()));
+        const mat = vals.maturities.split(",").map(s => parseFloat(s.trim()));
+        if (py.some(isNaN) || mat.some(isNaN)) throw new Error("Invalid input");
+        if (py.length !== mat.length) throw new Error("Par yields and maturities must have same length");
+        const spots = yieldCurve.bootstrapSpotRates(py, mat);
+        return spots.map((s, i) => ({ label: `Spot Rate (${mat[i]}Y)`, value: pct(s), highlight: i === spots.length - 1 }));
+      }}
+    />
+  );
+
+  // ─── QUEUING THEORY ───
+  if (moduleId === "queuing" && subId === "mm1") return (
+    <CalculatorForm title="M/M/1 Queue" description="Single-server Markovian queue analysis."
+      fields={[
+        { key: "lambda", label: "Arrival Rate (λ)", placeholder: "4" },
+        { key: "mu", label: "Service Rate (μ)", placeholder: "5" },
+      ]}
+      onCalculate={vals => {
+        const res = queuing.mm1(v(vals,"lambda"), v(vals,"mu"));
+        return [
+          { label: "Utilization (ρ)", value: fmt(res.utilization, 4), highlight: true },
+          { label: "Avg System Length (L)", value: fmt(res.avgSystemLength, 4) },
+          { label: "Avg Queue Length (Lq)", value: fmt(res.avgQueueLength, 4) },
+          { label: "Avg System Time (W)", value: fmt(res.avgSystemTime, 4) },
+          { label: "Avg Queue Time (Wq)", value: fmt(res.avgQueueTime, 4) },
+          { label: "P(empty)", value: fmt(res.probEmpty, 4) },
+        ];
+      }}
+    />
+  );
+  if (moduleId === "queuing" && subId === "mmc") return (
+    <CalculatorForm title="M/M/c Queue" description="Multi-server Markovian queue with Erlang-C."
+      fields={[
+        { key: "lambda", label: "Arrival Rate (λ)", placeholder: "10" },
+        { key: "mu", label: "Service Rate per Server (μ)", placeholder: "4" },
+        { key: "c", label: "Number of Servers (c)", placeholder: "3" },
+      ]}
+      onCalculate={vals => {
+        const res = queuing.mmc(v(vals,"lambda"), v(vals,"mu"), Math.round(v(vals,"c")));
+        return [
+          { label: "Utilization (ρ)", value: fmt(res.utilization, 4), highlight: true },
+          { label: "P(waiting)", value: fmt(res.probWaiting, 4) },
+          { label: "Avg Queue Length (Lq)", value: fmt(res.avgQueueLength, 4) },
+          { label: "Avg Queue Time (Wq)", value: fmt(res.avgQueueTime, 4) },
+          { label: "Avg System Length (L)", value: fmt(res.avgSystemLength, 4) },
+          { label: "Avg System Time (W)", value: fmt(res.avgSystemTime, 4) },
+        ];
+      }}
+    />
+  );
+
+  // ─── OPERATIONS FINANCE ───
+  if (moduleId === "operations" && subId === "eoq") return (
+    <CalculatorForm title="Economic Order Quantity (EOQ)" description="Optimal order quantity minimizing total inventory costs."
+      fields={[
+        { key: "D", label: "Annual Demand", placeholder: "10000" },
+        { key: "S", label: "Ordering Cost per Order ($)", placeholder: "100" },
+        { key: "H", label: "Holding Cost per Unit/Year ($)", placeholder: "5" },
+      ]}
+      onCalculate={vals => {
+        const res = ops.eoq(v(vals,"D"), v(vals,"S"), v(vals,"H"));
+        return [
+          { label: "EOQ", value: fmt(res.eoq, 2), highlight: true },
+          { label: "Total Annual Cost", value: fmt(res.totalAnnualCost, 2) },
+        ];
+      }}
+    />
+  );
+  if (moduleId === "operations" && subId === "rop") return (
+    <CalculatorForm title="Reorder Point" description="Calculate reorder point with safety stock."
+      fields={[
+        { key: "d", label: "Daily Demand", placeholder: "50" },
+        { key: "lt", label: "Lead Time (days)", placeholder: "7" },
+        { key: "sl", label: "Service Level (0-1)", placeholder: "0.95" },
+        { key: "stdDev", label: "Std Dev of Daily Demand", placeholder: "10" },
+      ]}
+      onCalculate={vals => {
+        const res = ops.reorderPoint(v(vals,"d"), v(vals,"lt"), v(vals,"sl"), v(vals,"stdDev"));
+        return [
+          { label: "Reorder Point", value: fmt(res.reorderPoint, 2), highlight: true },
+          { label: "Safety Stock", value: fmt(res.safetyStock, 2) },
+        ];
+      }}
+    />
+  );
+  if (moduleId === "operations" && subId === "newsvendor") return (
+    <CalculatorForm title="Newsvendor Model" description="Optimal stocking quantity under demand uncertainty."
+      fields={[
+        { key: "cu", label: "Cost of Understock (Cu)", placeholder: "10" },
+        { key: "co", label: "Cost of Overstock (Co)", placeholder: "3" },
+        { key: "type", label: "Demand Distribution", type: "select", options: [{ label: "Normal", value: "normal" }, { label: "Uniform", value: "uniform" }], defaultValue: "normal" },
+        { key: "mean", label: "Demand Mean (normal) / Min (uniform)", placeholder: "100" },
+        { key: "std", label: "Demand Std Dev (normal) / Max (uniform)", placeholder: "20" },
+      ]}
+      onCalculate={vals => {
+        const dt = vals.type as 'normal' | 'uniform';
+        const params = dt === 'normal'
+          ? { mean: v(vals,"mean"), stdDev: v(vals,"std") }
+          : { min: v(vals,"mean"), max: v(vals,"std") };
+        const res = ops.newsvendor(v(vals,"cu"), v(vals,"co"), dt, params);
+        return [
+          { label: "Critical Ratio", value: fmt(res.criticalRatio, 4) },
+          { label: "Optimal Quantity", value: fmt(res.optimalQuantity, 2), highlight: true },
+        ];
+      }}
+    />
+  );
+
+  // ─── FINANCIAL ACCOUNTING ───
+  if (moduleId === "accounting" && subId === "income-stmt") return (
+    <CalculatorForm title="Income Statement Generator" description="Generate a simplified income statement."
+      fields={[
+        { key: "revenue", label: "Revenue ($)", placeholder: "1000000" },
+        { key: "cogsPct", label: "COGS % of Revenue (decimal)", placeholder: "0.6" },
+        { key: "opexPct", label: "OpEx % of Revenue (decimal)", placeholder: "0.15" },
+        { key: "interest", label: "Interest Expense ($)", placeholder: "20000" },
+        { key: "taxRate", label: "Tax Rate (decimal)", placeholder: "0.25" },
+      ]}
+      onCalculate={vals => {
+        const is = accounting.generateIncomeStatement(v(vals,"revenue"), v(vals,"cogsPct"), v(vals,"opexPct"), v(vals,"interest"), v(vals,"taxRate"));
+        return [
+          { label: "Revenue", value: fmt(is.revenue, 2) },
+          { label: "COGS", value: fmt(is.cogs, 2) },
+          { label: "Gross Profit", value: fmt(is.grossProfit, 2), highlight: true },
+          { label: "Operating Expenses", value: fmt(is.operatingExpenses, 2) },
+          { label: "Operating Income", value: fmt(is.operatingIncome, 2), highlight: true },
+          { label: "Interest Expense", value: fmt(is.interestExpense, 2) },
+          { label: "EBT", value: fmt(is.ebt, 2) },
+          { label: "Tax Expense", value: fmt(is.taxExpense, 2) },
+          { label: "Net Income", value: fmt(is.netIncome, 2), highlight: true },
+        ];
+      }}
+    />
+  );
+  if (moduleId === "accounting" && subId === "balance-sheet") return (
+    <CalculatorForm title="Balance Sheet Generator" description="Generate a simplified balance sheet."
+      fields={[
+        { key: "cash", label: "Cash ($)", placeholder: "100000" },
+        { key: "receivables", label: "Receivables ($)", placeholder: "150000" },
+        { key: "inventory", label: "Inventory ($)", placeholder: "200000" },
+        { key: "fixedAssets", label: "Fixed Assets ($)", placeholder: "500000" },
+        { key: "currentLiab", label: "Current Liabilities ($)", placeholder: "120000" },
+        { key: "ltDebt", label: "Long-term Debt ($)", placeholder: "300000" },
+      ]}
+      onCalculate={vals => {
+        const bs = accounting.generateBalanceSheet(v(vals,"cash"), v(vals,"receivables"), v(vals,"inventory"), v(vals,"fixedAssets"), v(vals,"currentLiab"), v(vals,"ltDebt"));
+        return [
+          { label: "Current Assets", value: fmt(bs.currentAssets, 2) },
+          { label: "Fixed Assets", value: fmt(bs.fixedAssets, 2) },
+          { label: "Total Assets", value: fmt(bs.totalAssets, 2), highlight: true },
+          { label: "Current Liabilities", value: fmt(bs.currentLiabilities, 2) },
+          { label: "Long-term Debt", value: fmt(bs.longTermDebt, 2) },
+          { label: "Total Liabilities", value: fmt(bs.totalLiabilities, 2) },
+          { label: "Equity", value: fmt(bs.equity, 2), highlight: true },
+        ];
+      }}
+    />
+  );
+  if (moduleId === "accounting" && subId === "ratios") return (
+    <CalculatorForm title="Financial Ratios" description="Calculate key financial ratios from income and balance sheet data."
+      fields={[
+        { key: "revenue", label: "Revenue ($)", placeholder: "1000000" },
+        { key: "grossProfit", label: "Gross Profit ($)", placeholder: "400000" },
+        { key: "opIncome", label: "Operating Income ($)", placeholder: "250000" },
+        { key: "netIncome", label: "Net Income ($)", placeholder: "180000" },
+        { key: "currentAssets", label: "Current Assets ($)", placeholder: "450000" },
+        { key: "currentLiab", label: "Current Liabilities ($)", placeholder: "120000" },
+        { key: "totalAssets", label: "Total Assets ($)", placeholder: "950000" },
+        { key: "totalLiab", label: "Total Liabilities ($)", placeholder: "420000" },
+      ]}
+      onCalculate={vals => {
+        const eq = v(vals,"totalAssets") - v(vals,"totalLiab");
+        return [
+          { label: "Gross Margin", value: pct(v(vals,"grossProfit") / v(vals,"revenue")), highlight: true },
+          { label: "Operating Margin", value: pct(v(vals,"opIncome") / v(vals,"revenue")) },
+          { label: "Net Margin", value: pct(v(vals,"netIncome") / v(vals,"revenue")) },
+          { label: "Current Ratio", value: fmt(v(vals,"currentAssets") / v(vals,"currentLiab"), 2) },
+          { label: "Debt-to-Equity", value: fmt(v(vals,"totalLiab") / (eq || 1), 2) },
+          { label: "ROE", value: pct(v(vals,"netIncome") / (eq || 1)) },
+          { label: "ROA", value: pct(v(vals,"netIncome") / v(vals,"totalAssets")) },
+        ];
+      }}
+    />
+  );
+
+  // ─── GENERAL TOOLS ───
   if (moduleId === "general" && subId === "stats") return (
     <CalculatorForm title="Descriptive Statistics" description="Enter comma-separated numbers."
-      fields={[
-        { key: "data", label: "Data (comma-separated)", placeholder: "10,20,30,40,50" },
-      ]}
+      fields={[{ key: "data", label: "Data (comma-separated)", placeholder: "10,20,30,40,50" }]}
       onCalculate={vals => {
         const data = vals.data.split(",").map(s => parseFloat(s.trim()));
         if (data.some(isNaN)) throw new Error("Invalid data");
