@@ -33,7 +33,7 @@ type Module = {
 
 const modules: Module[] = [
   {
-    id: "tvm", label: "Time Value of Money", icon: {<CalcIcon size={18} />,
+    id: "tvm", label: "Time Value of Money", icon: <CalcIcon size={18} />,
     subCalcs: [
       { id: "fv", label: "Future Value" },
       { id: "pv", label: "Present Value" },
