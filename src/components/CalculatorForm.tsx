@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Download, FileText, Star } from "lucide-react";
+import { Download, FileText, BookOpen, ChevronDown } from "lucide-react";
 import { exportToCSV, exportToPDF } from "../lib/export-utils";
+import type { FormulaDoc } from "../lib/formula-docs";
 
 interface Field {
   key: string;
@@ -23,9 +24,10 @@ interface CalculatorFormProps {
   fields: Field[];
   onCalculate: (values: Record<string, string>) => Result[];
   onSaveResult?: (inputs: Record<string, string>, results: Result[]) => void;
+  formulaDoc?: FormulaDoc;
 }
 
-export const CalculatorForm: React.FC<CalculatorFormProps> = ({ title, description, fields, onCalculate, onSaveResult }) => {
+export const CalculatorForm: React.FC<CalculatorFormProps> = ({ title, description, fields, onCalculate, onSaveResult, formulaDoc }) => {
   const [values, setValues] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
     fields.forEach(f => { init[f.key] = f.defaultValue || ""; });
@@ -34,6 +36,7 @@ export const CalculatorForm: React.FC<CalculatorFormProps> = ({ title, descripti
   const [results, setResults] = useState<Result[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [showFormula, setShowFormula] = useState(false);
 
   const fieldLabels = Object.fromEntries(fields.map(f => [f.key, f.label]));
 
@@ -43,7 +46,6 @@ export const CalculatorForm: React.FC<CalculatorFormProps> = ({ title, descripti
       setSaved(false);
       const res = onCalculate(values);
       setResults(res);
-      // Auto-save to history
       if (onSaveResult) {
         onSaveResult(values, res);
         setSaved(true);
@@ -69,6 +71,50 @@ export const CalculatorForm: React.FC<CalculatorFormProps> = ({ title, descripti
         <h3 className="calc-section-title">{title}</h3>
         <p className="text-sm text-muted-foreground mt-1">{description}</p>
       </div>
+
+      {/* Formula Documentation */}
+      {formulaDoc && (
+        <div className="rounded-lg border border-border overflow-hidden">
+          <button
+            onClick={() => setShowFormula(!showFormula)}
+            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+          >
+            <BookOpen size={15} className="text-primary shrink-0" />
+            <span>Formula Reference</span>
+            <ChevronDown size={14} className={`ml-auto transition-transform duration-200 ${showFormula ? "rotate-180" : ""}`} />
+          </button>
+          {showFormula && (
+            <div className="px-4 pb-4 pt-1 space-y-3 border-t border-border bg-muted/20">
+              {/* Formula */}
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Formula</p>
+                <pre className="text-sm font-mono leading-relaxed text-foreground whitespace-pre-wrap bg-muted/40 rounded-md px-3 py-2">
+                  {formulaDoc.formula}
+                </pre>
+              </div>
+              {/* Variables */}
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Variables</p>
+                <div className="space-y-1">
+                  {formulaDoc.variables.map((v, i) => (
+                    <div key={i} className="flex gap-2 text-sm">
+                      <span className="font-mono text-primary font-semibold shrink-0 min-w-[60px]">{v.symbol}</span>
+                      <span className="text-muted-foreground">— {v.description}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Notes */}
+              {formulaDoc.notes && (
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Notes</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{formulaDoc.notes}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {fields.map(field => (
