@@ -136,7 +136,7 @@ const modules: Module[] = [
   },
 ];
 
-function getCalcContent(moduleId: string, subId: string) {
+function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs: Record<string, string>, results: Result[]) => void) {
   const v = (vals: Record<string, string>, key: string) => {
     const n = parseFloat(vals[key]);
     if (isNaN(n)) throw new Error(`Invalid input: ${key}`);
