@@ -882,6 +882,7 @@ const Index = () => {
       if (mod && mod.subCalcs.length > 0) {
         setActiveModule(moduleId);
         setActiveSubCalc(mod.subCalcs[0].id);
+        setShowHome(false);
       }
     }
   };
@@ -889,7 +890,25 @@ const Index = () => {
   const handleSubCalcClick = (moduleId: string, subId: string) => {
     setActiveModule(moduleId);
     setActiveSubCalc(subId);
+    setShowHome(false);
     setSidebarOpen(false);
+  };
+
+  const handleCategoryClick = (moduleId: string) => {
+    const mod = modules.find(m => m.id === moduleId);
+    if (mod && mod.subCalcs.length > 0) {
+      setActiveModule(moduleId);
+      setActiveSubCalc(mod.subCalcs[0].id);
+      setExpandedModule(moduleId);
+      setShowHome(false);
+    }
+  };
+
+  const handleGoHome = () => {
+    setShowHome(true);
+    setActiveModule("");
+    setActiveSubCalc("");
+    setExpandedModule("");
   };
 
   const handleLoadRecord = (record: CalculationRecord) => {
