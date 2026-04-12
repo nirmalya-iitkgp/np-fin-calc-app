@@ -312,6 +312,11 @@ function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs:
           { label: "Put Price", value: fmt(deriv.blackScholesPut(...args), 4), highlight: true },
         ];
       }}
+      renderChart={(vals) => {
+        const K = parseFloat(vals.K), S = parseFloat(vals.S), r = parseFloat(vals.r), T = parseFloat(vals.T), sigma = parseFloat(vals.sigma);
+        if ([K, S, r, T, sigma].some(isNaN)) return null;
+        return <BSMPayoffChart K={K} callPrice={deriv.blackScholesCall(S, K, r, T, sigma)} putPrice={deriv.blackScholesPut(S, K, r, T, sigma)} />;
+      }}
     />
   );
   if (moduleId === "derivatives" && subId === "greeks") return (
