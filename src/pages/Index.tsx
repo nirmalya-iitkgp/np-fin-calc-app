@@ -773,6 +773,12 @@ function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs:
           { label: "Net Income", value: fmt(is.netIncome, 2), highlight: true },
         ];
       }}
+      renderChart={(vals) => {
+        try {
+          const is = accounting.generateIncomeStatement(parseFloat(vals.revenue), parseFloat(vals.cogsPct), parseFloat(vals.opexPct), parseFloat(vals.interest), parseFloat(vals.taxRate));
+          return <IncomeStatementChart data={is} />;
+        } catch { return null; }
+      }}
     />
   );
   if (moduleId === "accounting" && subId === "balance-sheet") return (
@@ -877,6 +883,12 @@ function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs:
           label: `Year ${s.year}`,
           value: `Dep: $${fmt(s.depreciation, 2)} | BV: $${fmt(s.bookValue, 2)}`,
         }));
+      }}
+      renderChart={(vals) => {
+        try {
+          const sched = general.depreciation(parseFloat(vals.cost), parseFloat(vals.salvage), parseFloat(vals.life), vals.method as 'straight-line' | 'ddb');
+          return <DepreciationChart schedule={sched} />;
+        } catch { return null; }
       }}
     />
   );
