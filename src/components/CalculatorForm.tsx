@@ -25,6 +25,7 @@ interface CalculatorFormProps {
   onCalculate: (values: Record<string, string>) => Result[];
   onSaveResult?: (inputs: Record<string, string>, results: Result[]) => void;
   formulaDoc?: FormulaDoc;
+  renderChart?: (values: Record<string, string>, results: Result[]) => React.ReactNode;
 }
 
 export const CalculatorForm: React.FC<CalculatorFormProps> = ({ title, description, fields, onCalculate, onSaveResult, formulaDoc }) => {
