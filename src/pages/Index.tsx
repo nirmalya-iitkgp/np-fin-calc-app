@@ -641,6 +641,13 @@ function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs:
         const spots = yieldCurve.bootstrapSpotRates(py, mat);
         return spots.map((s, i) => ({ label: `Spot Rate (${mat[i]}Y)`, value: pct(s), highlight: i === spots.length - 1 }));
       }}
+      renderChart={(vals) => {
+        const py = vals.parYields.split(",").map(s => parseFloat(s.trim()));
+        const mat = vals.maturities.split(",").map(s => parseFloat(s.trim()));
+        if (py.some(isNaN) || mat.some(isNaN) || py.length !== mat.length) return null;
+        const spots = yieldCurve.bootstrapSpotRates(py, mat);
+        return <SpotRatesChart maturities={mat} spotRates={spots} />;
+      }}
     />
   );
 
