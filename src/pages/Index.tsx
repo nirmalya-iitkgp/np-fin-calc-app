@@ -17,6 +17,11 @@ import * as ops from "../lib/calculators/operations";
 import * as accounting from "../lib/calculators/accounting";
 import { getFormulaDoc } from "../lib/formula-docs";
 import {
+  FVGrowthChart, FVAnnuityChart, LoanAmortizationChart, NPVCashFlowChart,
+  BSMPayoffChart, YieldCurveChart, SpotRatesChart, DepreciationChart,
+  IncomeStatementChart, MonteCarloChart
+} from "../components/ResultCharts";
+import {
   Calculator as CalcIcon, TrendingUp, BarChart3, PieChart, Landmark, Activity,
   ChevronRight, Menu, X, Warehouse, ShieldAlert, GitBranch,
   Users, Settings, FileSpreadsheet, History, Star, Trash2, Download, FileText
