@@ -159,6 +159,11 @@ function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs:
         { key: "periods", label: "Number of Periods", placeholder: "10" },
       ]}
       onCalculate={vals => [{ label: "Future Value", value: fmt(tvm.futureValue(v(vals,"pv"), v(vals,"rate"), v(vals,"periods")), 2), highlight: true }]}
+      renderChart={(vals) => {
+        const pv = parseFloat(vals.pv), rate = parseFloat(vals.rate), periods = parseFloat(vals.periods);
+        if ([pv, rate, periods].some(isNaN)) return null;
+        return <FVGrowthChart pv={pv} rate={rate} periods={periods} />;
+      }}
     />
   );
   if (moduleId === "tvm" && subId === "pv") return (
