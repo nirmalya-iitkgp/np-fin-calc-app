@@ -568,6 +568,14 @@ function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs:
           { label: "95th Percentile", value: fmt(res.p95, 2) },
         ];
       }}
+      renderChart={(vals) => {
+        const fcfs = vals.fcfs.split(",").map(s => parseFloat(s.trim()));
+        if (fcfs.some(isNaN)) return null;
+        try {
+          const res = privCredit.monteCarloPEValuation(fcfs, parseFloat(vals.drMean), parseFloat(vals.drStd), parseFloat(vals.emMean), parseFloat(vals.emStd), Math.round(parseFloat(vals.sims)));
+          return <MonteCarloChart stats={res} />;
+        } catch { return null; }
+      }}
     />
   );
 
