@@ -218,6 +218,11 @@ function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs:
           { label: "Total Interest", value: fmt(pmt * v(vals,"periods") - v(vals,"principal"), 2) },
         ];
       }}
+      renderChart={(vals) => {
+        const principal = parseFloat(vals.principal), rate = parseFloat(vals.rate), periods = parseFloat(vals.periods);
+        if ([principal, rate, periods].some(isNaN)) return null;
+        return <LoanAmortizationChart principal={principal} rate={rate} periods={periods} />;
+      }}
     />
   );
   if (moduleId === "tvm" && subId === "apr-ear") return (
