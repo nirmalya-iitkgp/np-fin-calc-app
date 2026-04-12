@@ -25,9 +25,10 @@ interface CalculatorFormProps {
   onCalculate: (values: Record<string, string>) => Result[];
   onSaveResult?: (inputs: Record<string, string>, results: Result[]) => void;
   formulaDoc?: FormulaDoc;
+  renderChart?: (values: Record<string, string>, results: Result[]) => React.ReactNode;
 }
 
-export const CalculatorForm: React.FC<CalculatorFormProps> = ({ title, description, fields, onCalculate, onSaveResult, formulaDoc }) => {
+export const CalculatorForm: React.FC<CalculatorFormProps> = ({ title, description, fields, onCalculate, onSaveResult, formulaDoc, renderChart }) => {
   const [values, setValues] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
     fields.forEach(f => { init[f.key] = f.defaultValue || ""; });
@@ -198,6 +199,9 @@ export const CalculatorForm: React.FC<CalculatorFormProps> = ({ title, descripti
               <FileText size={13} /> PDF
             </button>
           </div>
+
+          {/* Chart visualization */}
+          {renderChart && renderChart(values, results)}
         </div>
       )}
     </div>

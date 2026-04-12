@@ -17,6 +17,11 @@ import * as ops from "../lib/calculators/operations";
 import * as accounting from "../lib/calculators/accounting";
 import { getFormulaDoc } from "../lib/formula-docs";
 import {
+  FVGrowthChart, FVAnnuityChart, LoanAmortizationChart, NPVCashFlowChart,
+  BSMPayoffChart, YieldCurveChart, SpotRatesChart, DepreciationChart,
+  IncomeStatementChart, MonteCarloChart
+} from "../components/ResultCharts";
+import {
   Calculator as CalcIcon, TrendingUp, BarChart3, PieChart, Landmark, Activity,
   ChevronRight, Menu, X, Warehouse, ShieldAlert, GitBranch,
   Users, Settings, FileSpreadsheet, History, Star, Trash2, Download, FileText
@@ -154,6 +159,11 @@ function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs:
         { key: "periods", label: "Number of Periods", placeholder: "10" },
       ]}
       onCalculate={vals => [{ label: "Future Value", value: fmt(tvm.futureValue(v(vals,"pv"), v(vals,"rate"), v(vals,"periods")), 2), highlight: true }]}
+      renderChart={(vals) => {
+        const pv = parseFloat(vals.pv), rate = parseFloat(vals.rate), periods = parseFloat(vals.periods);
+        if ([pv, rate, periods].some(isNaN)) return null;
+        return <FVGrowthChart pv={pv} rate={rate} periods={periods} />;
+      }}
     />
   );
   if (moduleId === "tvm" && subId === "pv") return (
@@ -175,6 +185,11 @@ function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs:
         { key: "type", label: "Annuity Type", type: "select", options: [{ label: "Ordinary", value: "0" }, { label: "Annuity Due", value: "1" }], defaultValue: "0" },
       ]}
       onCalculate={vals => [{ label: "Future Value", value: fmt(tvm.futureValueAnnuity(v(vals,"pmt"), v(vals,"rate"), v(vals,"periods"), vals.type === "1"), 2), highlight: true }]}
+      renderChart={(vals) => {
+        const pmt = parseFloat(vals.pmt), rate = parseFloat(vals.rate), periods = parseFloat(vals.periods);
+        if ([pmt, rate, periods].some(isNaN)) return null;
+        return <FVAnnuityChart pmt={pmt} rate={rate} periods={periods} isDue={vals.type === "1"} />;
+      }}
     />
   );
   if (moduleId === "tvm" && subId === "pv-annuity") return (
@@ -202,6 +217,11 @@ function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs:
           { label: "Total Paid", value: fmt(pmt * v(vals,"periods"), 2) },
           { label: "Total Interest", value: fmt(pmt * v(vals,"periods") - v(vals,"principal"), 2) },
         ];
+      }}
+      renderChart={(vals) => {
+        const principal = parseFloat(vals.principal), rate = parseFloat(vals.rate), periods = parseFloat(vals.periods);
+        if ([principal, rate, periods].some(isNaN)) return null;
+        return <LoanAmortizationChart principal={principal} rate={rate} periods={periods} />;
       }}
     />
   );
@@ -292,6 +312,11 @@ function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs:
           { label: "Put Price", value: fmt(deriv.blackScholesPut(...args), 4), highlight: true },
         ];
       }}
+      renderChart={(vals) => {
+        const K = parseFloat(vals.K), S = parseFloat(vals.S), r = parseFloat(vals.r), T = parseFloat(vals.T), sigma = parseFloat(vals.sigma);
+        if ([K, S, r, T, sigma].some(isNaN)) return null;
+        return <BSMPayoffChart K={K} callPrice={deriv.blackScholesCall(S, K, r, T, sigma)} putPrice={deriv.blackScholesPut(S, K, r, T, sigma)} />;
+      }}
     />
   );
   if (moduleId === "derivatives" && subId === "greeks") return (
@@ -342,6 +367,12 @@ function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs:
         const cfs = vals.cashflows.split(",").map(s => parseFloat(s.trim()));
         if (cfs.some(isNaN)) throw new Error("Invalid cash flows");
         return [{ label: "NPV", value: fmt(capBudget.npv(v(vals,"rate"), cfs), 2), highlight: true }];
+      }}
+      renderChart={(vals) => {
+        const rate = parseFloat(vals.rate);
+        const cfs = vals.cashflows.split(",").map(s => parseFloat(s.trim()));
+        if (isNaN(rate) || cfs.some(isNaN)) return null;
+        return <NPVCashFlowChart rate={rate} cashflows={cfs} />;
       }}
     />
   );
@@ -537,6 +568,14 @@ function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs:
           { label: "95th Percentile", value: fmt(res.p95, 2) },
         ];
       }}
+      renderChart={(vals) => {
+        const fcfs = vals.fcfs.split(",").map(s => parseFloat(s.trim()));
+        if (fcfs.some(isNaN)) return null;
+        try {
+          const res = privCredit.monteCarloPEValuation(fcfs, parseFloat(vals.drMean), parseFloat(vals.drStd), parseFloat(vals.emMean), parseFloat(vals.emStd), Math.round(parseFloat(vals.sims)));
+          return <MonteCarloChart stats={res} />;
+        } catch { return null; }
+      }}
     />
   );
 
@@ -551,6 +590,11 @@ function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs:
         { key: "tau", label: "τ (decay)", placeholder: "1.5" },
       ]}
       onCalculate={vals => [{ label: "Spot Yield", value: pct(yieldCurve.nelsonSiegelYield(v(vals,"m"), v(vals,"beta0"), v(vals,"beta1"), v(vals,"beta2"), v(vals,"tau"))), highlight: true }]}
+      renderChart={(vals) => {
+        const b0 = parseFloat(vals.beta0), b1 = parseFloat(vals.beta1), b2 = parseFloat(vals.beta2), tau = parseFloat(vals.tau);
+        if ([b0, b1, b2, tau].some(isNaN)) return null;
+        return <YieldCurveChart yieldFn={(m) => yieldCurve.nelsonSiegelYield(m, b0, b1, b2, tau)} />;
+      }}
     />
   );
   if (moduleId === "yieldcurve" && subId === "svensson") return (
@@ -565,6 +609,11 @@ function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs:
         { key: "tau2", label: "τ₂", placeholder: "5" },
       ]}
       onCalculate={vals => [{ label: "Spot Yield", value: pct(yieldCurve.svenssonYield(v(vals,"m"), v(vals,"beta0"), v(vals,"beta1"), v(vals,"beta2"), v(vals,"beta3"), v(vals,"tau1"), v(vals,"tau2"))), highlight: true }]}
+      renderChart={(vals) => {
+        const b0 = parseFloat(vals.beta0), b1 = parseFloat(vals.beta1), b2 = parseFloat(vals.beta2), b3 = parseFloat(vals.beta3), t1 = parseFloat(vals.tau1), t2 = parseFloat(vals.tau2);
+        if ([b0, b1, b2, b3, t1, t2].some(isNaN)) return null;
+        return <YieldCurveChart yieldFn={(m) => yieldCurve.svenssonYield(m, b0, b1, b2, b3, t1, t2)} />;
+      }}
     />
   );
   if (moduleId === "yieldcurve" && subId === "forward-rate") return (
@@ -591,6 +640,13 @@ function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs:
         if (py.length !== mat.length) throw new Error("Par yields and maturities must have same length");
         const spots = yieldCurve.bootstrapSpotRates(py, mat);
         return spots.map((s, i) => ({ label: `Spot Rate (${mat[i]}Y)`, value: pct(s), highlight: i === spots.length - 1 }));
+      }}
+      renderChart={(vals) => {
+        const py = vals.parYields.split(",").map(s => parseFloat(s.trim()));
+        const mat = vals.maturities.split(",").map(s => parseFloat(s.trim()));
+        if (py.some(isNaN) || mat.some(isNaN) || py.length !== mat.length) return null;
+        const spots = yieldCurve.bootstrapSpotRates(py, mat);
+        return <SpotRatesChart maturities={mat} spotRates={spots} />;
       }}
     />
   );
@@ -717,6 +773,12 @@ function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs:
           { label: "Net Income", value: fmt(is.netIncome, 2), highlight: true },
         ];
       }}
+      renderChart={(vals) => {
+        try {
+          const is = accounting.generateIncomeStatement(parseFloat(vals.revenue), parseFloat(vals.cogsPct), parseFloat(vals.opexPct), parseFloat(vals.interest), parseFloat(vals.taxRate));
+          return <IncomeStatementChart data={is} />;
+        } catch { return null; }
+      }}
     />
   );
   if (moduleId === "accounting" && subId === "balance-sheet") return (
@@ -821,6 +883,12 @@ function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs:
           label: `Year ${s.year}`,
           value: `Dep: $${fmt(s.depreciation, 2)} | BV: $${fmt(s.bookValue, 2)}`,
         }));
+      }}
+      renderChart={(vals) => {
+        try {
+          const sched = general.depreciation(parseFloat(vals.cost), parseFloat(vals.salvage), parseFloat(vals.life), vals.method as 'straight-line' | 'ddb');
+          return <DepreciationChart schedule={sched} />;
+        } catch { return null; }
       }}
     />
   );
