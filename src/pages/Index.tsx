@@ -1068,21 +1068,58 @@ const Index = () => {
 
       {/* Main content */}
       <main className="flex-1 overflow-y-auto">
-        {/* Header */}
-        <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>{activeModuleData?.label}</span>
-            <ChevronRight size={14} />
-            <span className="text-foreground font-medium">{activeSubCalcData?.label}</span>
-          </div>
-        </header>
+        {showHome ? (
+          <>
+            {/* Home Header */}
+            <header className="bg-background/80 backdrop-blur-md border-b border-border px-6 lg:px-8 py-6 lg:py-10">
+              <div className="max-w-4xl mx-auto text-center">
+                <h2 className="text-2xl lg:text-3xl font-bold text-foreground">Financial Calculator Suite</h2>
+                <p className="text-sm text-muted-foreground mt-2">Choose a category to get started</p>
+              </div>
+            </header>
 
-        {/* Calculator content */}
-        <div className="max-w-2xl mx-auto px-6 lg:px-8 py-8">
-          <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
-            {getCalcContent(activeModule, activeSubCalc, onSaveResult)}
-          </div>
-        </div>
+            {/* Category Grid */}
+            <div className="max-w-4xl mx-auto px-4 lg:px-8 py-6 lg:py-10">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
+                {modules.map(mod => (
+                  <button
+                    key={mod.id}
+                    onClick={() => handleCategoryClick(mod.id)}
+                    className="group flex flex-col items-center gap-3 p-4 lg:p-6 rounded-xl bg-card border border-border hover:border-primary/40 hover:shadow-md transition-all duration-200"
+                  >
+                    <div className="w-11 h-11 lg:w-14 lg:h-14 rounded-xl bg-accent flex items-center justify-center text-accent-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-200">
+                      {React.cloneElement(mod.icon as React.ReactElement, { size: 22 })}
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs lg:text-sm font-semibold text-foreground leading-tight">{mod.label}</p>
+                      <p className="text-[10px] lg:text-xs text-muted-foreground mt-0.5">{mod.subCalcs.length} calculators</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Calculator Header */}
+            <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border px-6 lg:px-8 py-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <button onClick={handleGoHome} className="hover:text-foreground transition-colors">Home</button>
+                <ChevronRight size={14} />
+                <span>{activeModuleData?.label}</span>
+                <ChevronRight size={14} />
+                <span className="text-foreground font-medium">{activeSubCalcData?.label}</span>
+              </div>
+            </header>
+
+            {/* Calculator content */}
+            <div className="max-w-2xl mx-auto px-6 lg:px-8 py-8">
+              <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
+                {getCalcContent(activeModule, activeSubCalc, onSaveResult)}
+              </div>
+            </div>
+          </>
+        )}
       </main>
     </div>
   );
