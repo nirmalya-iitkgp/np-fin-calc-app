@@ -865,10 +865,11 @@ type SidebarView = "calculators" | "history" | "favorites";
 
 
 const Index = () => {
-  const [activeModule, setActiveModule] = useState("tvm");
-  const [activeSubCalc, setActiveSubCalc] = useState("fv");
-  const [expandedModule, setExpandedModule] = useState("tvm");
+  const [activeModule, setActiveModule] = useState("");
+  const [activeSubCalc, setActiveSubCalc] = useState("");
+  const [expandedModule, setExpandedModule] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showHome, setShowHome] = useState(true);
   const [sidebarView, setSidebarView] = useState<SidebarView>("calculators");
   const store = useCalculationStore();
 
