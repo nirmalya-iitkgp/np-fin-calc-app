@@ -130,16 +130,20 @@ export const CalculatorForm: React.FC<CalculatorFormProps> = ({ title, descripti
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
-            ) : (
-              <input
-                type="number"
-                className="calc-input w-full"
-                placeholder={field.placeholder}
-                value={values[field.key]}
-                onChange={e => setValues(prev => ({ ...prev, [field.key]: e.target.value }))}
-                onKeyDown={e => e.key === "Enter" && handleCalculate()}
-              />
-            )}
+            ) : (() => {
+              const isCommaSeparated = field.placeholder?.includes(",") || field.label.toLowerCase().includes("comma");
+              return (
+                <input
+                  type="text"
+                  inputMode={isCommaSeparated ? "text" : "decimal"}
+                  className="calc-input w-full"
+                  placeholder={field.placeholder}
+                  value={values[field.key]}
+                  onChange={e => setValues(prev => ({ ...prev, [field.key]: e.target.value }))}
+                  onKeyDown={e => e.key === "Enter" && handleCalculate()}
+                />
+              );
+            })()}
           </div>
         ))}
       </div>
