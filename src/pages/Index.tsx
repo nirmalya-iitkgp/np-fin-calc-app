@@ -368,6 +368,12 @@ function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs:
         if (cfs.some(isNaN)) throw new Error("Invalid cash flows");
         return [{ label: "NPV", value: fmt(capBudget.npv(v(vals,"rate"), cfs), 2), highlight: true }];
       }}
+      renderChart={(vals) => {
+        const rate = parseFloat(vals.rate);
+        const cfs = vals.cashflows.split(",").map(s => parseFloat(s.trim()));
+        if (isNaN(rate) || cfs.some(isNaN)) return null;
+        return <NPVCashFlowChart rate={rate} cashflows={cfs} />;
+      }}
     />
   );
   if (moduleId === "capital" && subId === "irr") return (
