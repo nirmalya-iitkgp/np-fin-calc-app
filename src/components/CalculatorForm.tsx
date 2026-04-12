@@ -199,6 +199,9 @@ export const CalculatorForm: React.FC<CalculatorFormProps> = ({ title, descripti
               <FileText size={13} /> PDF
             </button>
           </div>
+
+          {/* Chart visualization */}
+          {renderChart && renderChart(values, results)}
         </div>
       )}
     </div>
