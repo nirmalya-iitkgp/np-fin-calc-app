@@ -185,6 +185,11 @@ function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs:
         { key: "type", label: "Annuity Type", type: "select", options: [{ label: "Ordinary", value: "0" }, { label: "Annuity Due", value: "1" }], defaultValue: "0" },
       ]}
       onCalculate={vals => [{ label: "Future Value", value: fmt(tvm.futureValueAnnuity(v(vals,"pmt"), v(vals,"rate"), v(vals,"periods"), vals.type === "1"), 2), highlight: true }]}
+      renderChart={(vals) => {
+        const pmt = parseFloat(vals.pmt), rate = parseFloat(vals.rate), periods = parseFloat(vals.periods);
+        if ([pmt, rate, periods].some(isNaN)) return null;
+        return <FVAnnuityChart pmt={pmt} rate={rate} periods={periods} isDue={vals.type === "1"} />;
+      }}
     />
   );
   if (moduleId === "tvm" && subId === "pv-annuity") return (
