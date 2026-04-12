@@ -590,6 +590,11 @@ function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs:
         { key: "tau", label: "τ (decay)", placeholder: "1.5" },
       ]}
       onCalculate={vals => [{ label: "Spot Yield", value: pct(yieldCurve.nelsonSiegelYield(v(vals,"m"), v(vals,"beta0"), v(vals,"beta1"), v(vals,"beta2"), v(vals,"tau"))), highlight: true }]}
+      renderChart={(vals) => {
+        const b0 = parseFloat(vals.beta0), b1 = parseFloat(vals.beta1), b2 = parseFloat(vals.beta2), tau = parseFloat(vals.tau);
+        if ([b0, b1, b2, tau].some(isNaN)) return null;
+        return <YieldCurveChart yieldFn={(m) => yieldCurve.nelsonSiegelYield(m, b0, b1, b2, tau)} />;
+      }}
     />
   );
   if (moduleId === "yieldcurve" && subId === "svensson") return (
@@ -604,6 +609,11 @@ function getCalcContent(moduleId: string, subId: string, onSaveResult?: (inputs:
         { key: "tau2", label: "τ₂", placeholder: "5" },
       ]}
       onCalculate={vals => [{ label: "Spot Yield", value: pct(yieldCurve.svenssonYield(v(vals,"m"), v(vals,"beta0"), v(vals,"beta1"), v(vals,"beta2"), v(vals,"beta3"), v(vals,"tau1"), v(vals,"tau2"))), highlight: true }]}
+      renderChart={(vals) => {
+        const b0 = parseFloat(vals.beta0), b1 = parseFloat(vals.beta1), b2 = parseFloat(vals.beta2), b3 = parseFloat(vals.beta3), t1 = parseFloat(vals.tau1), t2 = parseFloat(vals.tau2);
+        if ([b0, b1, b2, b3, t1, t2].some(isNaN)) return null;
+        return <YieldCurveChart yieldFn={(m) => yieldCurve.svenssonYield(m, b0, b1, b2, b3, t1, t2)} />;
+      }}
     />
   );
   if (moduleId === "yieldcurve" && subId === "forward-rate") return (
