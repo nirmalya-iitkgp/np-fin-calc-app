@@ -916,6 +916,7 @@ const Index = () => {
     setActiveSubCalc(record.subCalcId);
     const mod = modules.find(m => m.id === record.moduleId);
     if (mod) setExpandedModule(mod.id);
+    setShowHome(false);
     setSidebarOpen(false);
   };
 
