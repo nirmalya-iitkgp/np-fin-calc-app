@@ -9,7 +9,7 @@
 
 **A modern, intuitive financial calculator application built with cutting-edge web technologies.**
 
-[View Demo](#) • [Report Bug](https://github.com/nirmalya-iitkgp/np-fin-calc-app/issues) • [Request Feature](https://github.com/nirmalya-iitkgp/np-fin-calc-app/issues)
+[View Demo](https://np-fin.lovable.app/) • [Report Bug](https://github.com/nirmalya-iitkgp/np-fin-calc-app/issues) • [Request Feature](https://github.com/nirmalya-iitkgp/np-fin-calc-app/issues)
 
 </div>
 
