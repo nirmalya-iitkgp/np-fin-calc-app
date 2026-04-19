@@ -246,9 +246,9 @@ This project is open source and available under the MIT License. See the LICENSE
 
 ## 👨‍💻 Author
 
-**Nirmalya Dey**
+**Nirmalya Panigrahi**
 - GitHub: [@nirmalya-iitkgp](https://github.com/nirmalya-iitkgp)
-- Portfolio: Check out my other projects!
+- Portfolio: https://nirmalya-iitkgp.github.io/
 
 ## 🙏 Acknowledgments
 
